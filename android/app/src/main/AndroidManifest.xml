@@ -1,0 +1,136 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ==================================================================
+         PERMISSIONS
+         Audit this list before every release: an unused permission is a
+         Play rejection risk and hurts the install conversion rate.
+         Check the MERGED manifest (build/app/outputs/logs) because plugins
+         add permissions of their own.
+         ================================================================== -->
+
+    <!-- Required by AdMob and by any network call. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Advertising ID. Added by the AdMob SDK; declared here so it is not
+         forgotten in the Data Safety form, where it MUST be reported. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+    <!-- Bluetooth, Android 12+ (API 31). Remove `neverForLocation` if the app
+         actually derives the user's location from nearby devices. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Legacy Bluetooth for Android 11 and below (install-time permissions). -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+
+    <!-- Foreground location only. ACCESS_BACKGROUND_LOCATION requires a
+         separate Play Console review and a recorded demo video: do not add it
+         unless the app genuinely needs it. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Notifications, Android 13+ (API 33). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Reminder: a plugin may inject a permission you do not use. Check the
+         merged manifest (build/app/intermediates/merged_manifest/...) after
+         every dependency change and drop the extras with:
+             <uses-permission android:name="android.permission.SOME_PERMISSION"
+                 tools:node="remove" />
+         The current merge adds BILLING, WAKE_LOCK, FOREGROUND_SERVICE and the
+         Privacy Sandbox ACCESS_ADSERVICES_* permissions, all legitimately
+         required by Play Billing and the AdMob SDK. -->
+
+    <application
+        android:label="${appName}"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
+
+        <!-- ==============================================================
+             AdMob App ID — OFFICIAL GOOGLE TEST ID.
+             Replace it with the production App ID only when you ship, and
+             keep the test id in the dev flavor. Shipping a production App ID
+             in a debug build is a direct cause of an AdMob ban for invalid
+             traffic.
+             ============================================================== -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
+        <!-- Delays ad SDK initialization until MobileAds.initialize() is
+             called, so nothing competes with the first frame. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_INITIALIZATION"
+            android:value="true" />
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_AD_LOADING"
+            android:value="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
+            <!-- Hands deep links to go_router instead of letting the engine
+                 ignore them. Must live inside <activity>: Flutter reads it
+                 from the ActivityInfo metadata. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="true" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Custom scheme deep links: apptemplate://premium
+                 Wired from day one — campaigns and notifications rely on it. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="apptemplate" />
+            </intent-filter>
+
+            <!-- App Links (verified https). Enable after publishing
+                 assetlinks.json on the domain, otherwise Android ignores it.
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="example.com" />
+            </intent-filter>
+            -->
+        </activity>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
+</manifest>

@@ -1,0 +1,63 @@
+name: app_template
+description: "Plantilla base modular en Flutter para desarrollo rápido de aplicaciones Android. Incluye integración de Google AdMob, gestión de permisos Android 12+, tematización Material 3 y arquitectura escalable."
+# Evita publicar accidentalmente la plantilla en pub.dev.
+publish_to: "none"
+
+# versionName + versionCode. Incrementar SIEMPRE el build number (+N) en cada
+# subida a Google Play; el versionCode no puede repetirse ni retroceder.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # --- Estado -------------------------------------------------------------
+  # Riverpod: estándar único de gestión de estado (sin BuildContext, testeable
+  # sin widget tree, autoDispose granular).
+  flutter_riverpod: ^3.4.2
+
+  # --- Navegación ---------------------------------------------------------
+  # go_router: rutas declarativas + deep links desde el día 1 (ASO / push).
+  go_router: ^17.4.0
+
+  # --- Monetización -------------------------------------------------------
+  # AdMob: banner + interstitial + rewarded. Incluye el UMP SDK (consentimiento
+  # GDPR), por eso no se añade ninguna dependencia extra de consentimiento.
+  google_mobile_ads: ^9.0.0
+  # IAP no consumible "quitar anuncios": conversión principal del modelo freemium.
+  in_app_purchase: ^3.3.0
+
+  # --- Plataforma ---------------------------------------------------------
+  # Permisos runtime Android 12+ (Bluetooth, ubicación, notificaciones).
+  permission_handler: ^13.0.0
+  # Diálogo nativo de reseña de Google Play tras un momento de éxito.
+  in_app_review: ^2.0.12
+
+  # --- Persistencia -------------------------------------------------------
+  # Clave-valor simple: flags, contadores, preferencias de UI.
+  shared_preferences: ^2.5.5
+  # Datos sensibles: entitlement premium y tokens de compra.
+  flutter_secure_storage: ^11.0.0
+
+  # --- Utilidades ---------------------------------------------------------
+  # Requerido por la localización generada (gen-l10n).
+  # La versión la fija flutter_localizations del SDK de Flutter (pinning).
+  intl: ^0.20.2
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  # Activa la generación de AppLocalizations a partir de lib/l10n/*.arb.
+  generate: true
+  # assets:
+  #   - assets/images/     # WebP para bitmaps, SVG para iconografía.

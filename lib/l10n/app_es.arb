@@ -1,0 +1,134 @@
+{
+  "@@locale": "es",
+
+  "appTitle": "App Template",
+  "@appTitle": {
+    "description": "Nombre visible de la aplicación"
+  },
+
+  "commonCancel": "Cancelar",
+  "commonContinue": "Continuar",
+  "commonNotNow": "Ahora no",
+  "commonRetry": "Reintentar",
+  "commonClose": "Cerrar",
+  "commonErrorGeneric": "Algo ha salido mal. Inténtalo de nuevo.",
+
+  "homeTitle": "Inicio",
+  "homeSubtitle": "Plantilla base con AdMob, permisos, reseñas y compras integradas.",
+  "homeCounterLabel": "Acciones completadas: {count}",
+  "@homeCounterLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeCompleteTask": "Completar tarea",
+  "homeTaskDone": "Tarea completada",
+
+  "rewardsTitle": "Recompensas",
+  "rewardsBalance": "Créditos disponibles: {credits}",
+  "@rewardsBalance": {
+    "placeholders": {
+      "credits": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsWatchAd": "Ver anuncio y ganar {amount} créditos",
+  "@rewardsWatchAd": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsDialogTitle": "¿Quieres {amount} créditos?",
+  "@rewardsDialogTitle": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsDialogBody": "Verás un vídeo corto y al terminarlo recibirás la recompensa.",
+  "rewardsEarned": "¡Has ganado {amount} créditos!",
+  "@rewardsEarned": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsAdUnavailable": "No hay vídeo disponible ahora mismo. Inténtalo más tarde.",
+
+  "permissionsTitle": "Permisos",
+  "permissionBluetooth": "Bluetooth",
+  "permissionLocation": "Ubicación",
+  "permissionNotifications": "Notificaciones",
+  "permissionBluetoothReason": "Necesitamos Bluetooth para buscar y conectar con dispositivos cercanos.",
+  "permissionLocationReason": "Necesitamos tu ubicación para mostrarte resultados cercanos.",
+  "permissionNotificationsReason": "Activa las notificaciones para avisarte cuando termine un proceso.",
+  "permissionRationaleTitle": "Permiso necesario",
+  "permissionDeniedForeverTitle": "Permiso bloqueado",
+  "permissionDeniedForeverBody": "Has denegado este permiso permanentemente. Ábrelo desde los ajustes del sistema para poder usar esta función.",
+  "permissionOpenSettings": "Abrir ajustes",
+  "permissionGranted": "Permiso de {permission} concedido",
+  "@permissionGranted": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionDenied": "Permiso de {permission} denegado",
+  "@permissionDenied": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionUnsupported": "Este permiso no aplica en esta versión de Android",
+
+  "settingsTitle": "Ajustes",
+  "settingsAppearance": "Apariencia",
+  "settingsThemeMode": "Tema",
+  "settingsThemeSystem": "Sistema",
+  "settingsThemeLight": "Claro",
+  "settingsThemeDark": "Oscuro",
+  "settingsMonetization": "Suscripción y anuncios",
+  "settingsRemoveAds": "Quitar anuncios",
+  "settingsRestorePurchases": "Restaurar compras",
+  "settingsRestoreDone": "Compras restauradas",
+  "settingsPrivacyOptions": "Opciones de privacidad",
+  "settingsRateApp": "Valorar la aplicación",
+  "settingsAbout": "Acerca de",
+  "settingsVersion": "Versión {version}",
+  "@settingsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
+  "premiumActive": "Premium activo. Sin anuncios.",
+  "paywallTitle": "Quitar anuncios",
+  "paywallHeadline": "Disfruta de la app sin interrupciones",
+  "paywallBenefitNoAds": "Sin banners ni anuncios a pantalla completa",
+  "paywallBenefitSupport": "Apoyas el desarrollo de la aplicación",
+  "paywallBenefitOneTime": "Pago único, sin suscripción",
+  "paywallBuy": "Comprar por {price}",
+  "@paywallBuy": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallRestore": "Ya lo compré",
+  "paywallUnavailable": "La tienda no está disponible ahora mismo.",
+  "paywallPending": "Procesando la compra…",
+  "paywallError": "No se ha podido completar la compra."
+}
