@@ -13,4 +13,11 @@ abstract final class AppRoutes {
   /// Paywall. Reachable by deep link so a campaign can land directly on it.
   static const String paywallPath = '/premium';
   static const String paywallName = 'premium';
+
+  /// Proximity radar for one device. The id travels in the path (MAC address on
+  /// Android, system UUID on iOS) so the screen survives a rebuild and can be
+  /// reached from a notification.
+  static const String radarPath = '/radar/:deviceId';
+  static const String radarName = 'radar';
+  static const String radarDeviceIdParam = 'deviceId';
 }

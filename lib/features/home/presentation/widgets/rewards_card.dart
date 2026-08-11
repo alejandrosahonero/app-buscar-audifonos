@@ -1,10 +1,10 @@
-import 'package:app_template/core/config/app_config.dart';
-import 'package:app_template/core/extensions/build_context_x.dart';
-import 'package:app_template/core/theme/app_spacing.dart';
-import 'package:app_template/core/widgets/section_card.dart';
-import 'package:app_template/features/home/presentation/providers/home_controller.dart';
-import 'package:app_template/services/ads/ads_providers.dart';
-import 'package:app_template/services/ads/ads_service.dart';
+import 'package:buscar_audifonos/core/config/app_config.dart';
+import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
+import 'package:buscar_audifonos/core/theme/app_spacing.dart';
+import 'package:buscar_audifonos/core/widgets/section_card.dart';
+import 'package:buscar_audifonos/features/home/presentation/providers/home_controller.dart';
+import 'package:buscar_audifonos/services/ads/ads_providers.dart';
+import 'package:buscar_audifonos/services/ads/ads_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';

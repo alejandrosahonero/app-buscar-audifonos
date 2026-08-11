@@ -1,5 +1,5 @@
-import 'package:app_template/core/theme/app_colors.dart';
-import 'package:app_template/l10n/generated/app_localizations.dart';
+import 'package:buscar_audifonos/core/theme/app_colors.dart';
+import 'package:buscar_audifonos/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// Shorthands for the three lookups that appear in almost every widget.

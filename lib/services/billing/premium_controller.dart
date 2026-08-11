@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:app_template/core/utils/app_logger.dart';
-import 'package:app_template/services/billing/premium_service.dart';
-import 'package:app_template/services/billing/premium_state.dart';
-import 'package:app_template/services/storage/storage_providers.dart';
+import 'package:buscar_audifonos/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/services/billing/premium_service.dart';
+import 'package:buscar_audifonos/services/billing/premium_state.dart';
+import 'package:buscar_audifonos/services/storage/storage_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 

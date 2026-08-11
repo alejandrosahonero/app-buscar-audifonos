@@ -1,5 +1,5 @@
-import 'package:app_template/core/routing/app_routes.dart';
-import 'package:app_template/core/theme/app_spacing.dart';
+import 'package:buscar_audifonos/core/routing/app_routes.dart';
+import 'package:buscar_audifonos/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

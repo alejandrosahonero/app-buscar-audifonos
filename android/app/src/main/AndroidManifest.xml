@@ -102,13 +102,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Custom scheme deep links: apptemplate://premium
+            <!-- Custom scheme deep links: buscaraudifonos://premium
                  Wired from day one — campaigns and notifications rely on it. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="apptemplate" />
+                <data android:scheme="buscaraudifonos" />
             </intent-filter>
 
             <!-- App Links (verified https). Enable after publishing

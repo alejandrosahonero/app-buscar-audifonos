@@ -1,6 +1,6 @@
-import 'package:app_template/core/config/app_config.dart';
-import 'package:app_template/core/utils/app_logger.dart';
-import 'package:app_template/services/storage/key_value_store.dart';
+import 'package:buscar_audifonos/core/config/app_config.dart';
+import 'package:buscar_audifonos/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/services/storage/key_value_store.dart';
 import 'package:in_app_review/in_app_review.dart';
 
 /// In-app review prompt (Google Play native dialog).

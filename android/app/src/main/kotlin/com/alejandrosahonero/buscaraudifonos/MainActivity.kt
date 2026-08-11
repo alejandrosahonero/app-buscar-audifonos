@@ -1,4 +1,4 @@
-package com.alejandrosahonero.app_template
+package com.alejandrosahonero.buscaraudifonos
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,4 +1,4 @@
-import 'package:app_template/core/theme/app_spacing.dart';
+import 'package:buscar_audifonos/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 /// Centered progress indicator with an optional label.

@@ -1,4 +1,4 @@
-import 'package:app_template/core/widgets/adaptive_banner_ad.dart';
+import 'package:buscar_audifonos/core/widgets/adaptive_banner_ad.dart';
 import 'package:flutter/material.dart';
 
 /// Standard screen shell for the app.

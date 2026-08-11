@@ -1,5 +1,5 @@
-import 'package:app_template/core/errors/app_exception.dart';
-import 'package:app_template/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/core/errors/app_exception.dart';
+import 'package:buscar_audifonos/core/utils/app_logger.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Encrypted key-value storage for sensitive data (purchase tokens, premium
@@ -17,7 +17,7 @@ class SecureStore {
   static const AndroidOptions androidOptions = AndroidOptions(
     // Keeps the namespace stable across `applicationId` suffixes (dev/prod
     // flavors write to separate app sandboxes anyway).
-    storageNamespace: 'app_template_secure',
+    storageNamespace: 'buscar_audifonos_secure',
   );
 
   Future<String?> read(String key) async {

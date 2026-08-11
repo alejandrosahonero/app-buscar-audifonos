@@ -1,10 +1,10 @@
-import 'package:app_template/core/extensions/build_context_x.dart';
-import 'package:app_template/core/theme/app_spacing.dart';
-import 'package:app_template/core/widgets/app_loader.dart';
-import 'package:app_template/core/widgets/base_screen.dart';
-import 'package:app_template/core/widgets/error_view.dart';
-import 'package:app_template/services/billing/premium_controller.dart';
-import 'package:app_template/services/billing/premium_state.dart';
+import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
+import 'package:buscar_audifonos/core/theme/app_spacing.dart';
+import 'package:buscar_audifonos/core/widgets/app_loader.dart';
+import 'package:buscar_audifonos/core/widgets/base_screen.dart';
+import 'package:buscar_audifonos/core/widgets/error_view.dart';
+import 'package:buscar_audifonos/services/billing/premium_controller.dart';
+import 'package:buscar_audifonos/services/billing/premium_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

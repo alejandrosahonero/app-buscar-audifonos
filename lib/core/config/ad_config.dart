@@ -1,4 +1,4 @@
-import 'package:app_template/core/config/app_config.dart';
+import 'package:buscar_audifonos/core/config/app_config.dart';
 
 /// AdMob identifiers.
 ///

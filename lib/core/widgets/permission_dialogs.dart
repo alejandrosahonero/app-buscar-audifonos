@@ -1,5 +1,5 @@
-import 'package:app_template/core/extensions/build_context_x.dart';
-import 'package:app_template/services/permissions/permission_service.dart';
+import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
+import 'package:buscar_audifonos/services/permissions/permission_service.dart';
 import 'package:flutter/material.dart';
 
 /// UI half of the permission flow.

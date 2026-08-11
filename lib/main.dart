@@ -1,4 +1,4 @@
-import 'package:app_template/bootstrap.dart';
+import 'package:buscar_audifonos/bootstrap.dart';
 
 /// Deliberately empty: every initialization step lives in `bootstrap.dart`,
 /// inside the guarded zone. Do not add logic here.

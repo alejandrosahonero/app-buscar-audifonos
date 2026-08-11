@@ -19,7 +19,7 @@ if (hasKeystore) {
 }
 
 android {
-    namespace = "com.alejandrosahonero.app_template"
+    namespace = "com.alejandrosahonero.buscaraudifonos"
 
     // Pinned to 37: required by permission_handler 13 and
     // flutter_secure_storage 11. Do not lower it.
@@ -33,7 +33,7 @@ android {
 
     defaultConfig {
         // CANNOT be changed after the first publication on Google Play.
-        applicationId = "com.alejandrosahonero.app_template"
+        applicationId = "com.alejandrosahonero.buscaraudifonos"
         minSdk = 24
         // Play requires targeting a recent API every year (deadline is usually
         // 31 August). `flutter.targetSdkVersion` tracks the Flutter stable
@@ -90,11 +90,11 @@ android {
             dimension = "env"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            manifestPlaceholders["appName"] = "App Template Dev"
+            manifestPlaceholders["appName"] = "Buscar Audífonos: Localizador Dev"
         }
         create("prod") {
             dimension = "env"
-            manifestPlaceholders["appName"] = "App Template"
+            manifestPlaceholders["appName"] = "Buscar Audífonos: Localizador"
         }
     }
 }

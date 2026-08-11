@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:app_template/core/utils/app_logger.dart';
-import 'package:app_template/services/ads/ads_providers.dart';
-import 'package:app_template/services/ads/ads_service.dart';
-import 'package:app_template/services/billing/premium_controller.dart';
+import 'package:buscar_audifonos/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/services/ads/ads_providers.dart';
+import 'package:buscar_audifonos/services/ads/ads_service.dart';
+import 'package:buscar_audifonos/services/billing/premium_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';

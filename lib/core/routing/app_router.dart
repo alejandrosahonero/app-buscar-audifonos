@@ -1,8 +1,9 @@
-import 'package:app_template/core/routing/app_routes.dart';
-import 'package:app_template/core/widgets/error_view.dart';
-import 'package:app_template/features/home/presentation/screens/home_screen.dart';
-import 'package:app_template/features/premium/presentation/screens/paywall_screen.dart';
-import 'package:app_template/features/settings/presentation/screens/settings_screen.dart';
+import 'package:buscar_audifonos/core/routing/app_routes.dart';
+import 'package:buscar_audifonos/core/widgets/error_view.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/screens/radar_screen.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/screens/scanner_screen.dart';
+import 'package:buscar_audifonos/features/premium/presentation/screens/paywall_screen.dart';
+import 'package:buscar_audifonos/features/settings/presentation/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +31,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.homePath,
         name: AppRoutes.homeName,
         builder: (BuildContext context, GoRouterState state) =>
-            const HomeScreen(),
+            const ScannerScreen(),
         routes: <RouteBase>[
           GoRoute(
             path: 'settings',
@@ -43,6 +44,14 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: AppRoutes.paywallName,
             builder: (BuildContext context, GoRouterState state) =>
                 const PaywallScreen(),
+          ),
+          GoRoute(
+            path: 'radar/:${AppRoutes.radarDeviceIdParam}',
+            name: AppRoutes.radarName,
+            builder: (BuildContext context, GoRouterState state) => RadarScreen(
+              deviceId:
+                  state.pathParameters[AppRoutes.radarDeviceIdParam] ?? '',
+            ),
           ),
         ],
       ),

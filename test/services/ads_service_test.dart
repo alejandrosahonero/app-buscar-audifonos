@@ -1,5 +1,5 @@
-import 'package:app_template/services/ads/ads_service.dart';
-import 'package:app_template/services/ads/consent_service.dart';
+import 'package:buscar_audifonos/services/ads/ads_service.dart';
+import 'package:buscar_audifonos/services/ads/consent_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Consent is not granted and the SDK was never initialized, which is exactly

@@ -1,6 +1,6 @@
-import 'package:app_template/core/config/billing_config.dart';
-import 'package:app_template/core/utils/app_logger.dart';
-import 'package:app_template/services/storage/secure_store.dart';
+import 'package:buscar_audifonos/core/config/billing_config.dart';
+import 'package:buscar_audifonos/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/services/storage/secure_store.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 /// Store plumbing for the non consumable "remove ads" product.

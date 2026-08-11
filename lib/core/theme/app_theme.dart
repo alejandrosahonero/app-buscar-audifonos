@@ -1,5 +1,5 @@
-import 'package:app_template/core/theme/app_colors.dart';
-import 'package:app_template/core/theme/app_spacing.dart';
+import 'package:buscar_audifonos/core/theme/app_colors.dart';
+import 'package:buscar_audifonos/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 /// Material 3 themes for the app.

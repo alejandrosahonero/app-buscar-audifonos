@@ -42,7 +42,12 @@ lib/
 │                             # EmptyState, ErrorView, AppLoader,
 │                             # PermissionFlow (diálogos de permisos)
 ├── features/
-│   ├── home/presentation/    # feature de ejemplo (providers/screens/widgets)
+│   ├── bluetooth_finder/     # ⭐ FEATURE PRINCIPAL — radar RSSI (ver §1.1)
+│   │   ├── data/             # BluetoothScanService, GeigerSounder
+│   │   ├── domain/           # DiscoveredDevice, Proximity, ScanFilter
+│   │   └── presentation/     # ScannerScreen (home), RadarScreen, providers
+│   ├── home/presentation/    # feature de ejemplo de la plantilla (HUÉRFANA:
+│   │                         # ya no está enrutada, ver §1.1)
 │   ├── settings/presentation/
 │   └── premium/presentation/ # paywall
 ├── services/
@@ -58,6 +63,102 @@ lib/
 **`domain/` solo se crea cuando la feature tiene lógica de negocio real.** Las features de la plantilla son triviales, por eso solo tienen `presentation/`. No crear carpetas vacías.
 
 **Cada feature es autocontenida y borrable.** Si un helper solo lo usa una feature, vive dentro de esa feature, nunca en `core/utils/`.
+
+---
+
+## 1.1 Feature principal — `bluetooth_finder` (radar RSSI)
+
+Localizador de audífonos y dispositivos Bluetooth. Es la única feature con las
+tres capas (`data` / `domain` / `presentation`), porque es la única con lógica
+de negocio real.
+
+**La ruta `/` apunta a `ScannerScreen`,** no a la `HomeScreen` de la plantilla.
+`lib/features/home/` quedó huérfana (no la importa nadie): es andamiaje de
+demo y puede borrarse. Sus integraciones (interstitial tras acción de valor y
+`requestReviewAfterSuccess`) ya están portadas a esta feature.
+
+### Rutas
+
+| Ruta | Pantalla |
+|---|---|
+| `/` | `ScannerScreen` — lista de dispositivos, FAB Escanear/Detener, banner |
+| `/radar/:deviceId` | `RadarScreen` — radar animado + sonido Geiger |
+
+`AppRoutes.radarDeviceIdParam` es el id (MAC en Android, UUID en iOS). El radar
+**no** recibe el dispositivo por `extra`: lo relee del stream por id, porque la
+lectura tiene que seguir cambiando mientras el usuario camina.
+
+### `BluetoothScanService` (`data/`)
+
+Envuelve `flutter_blue_plus`; lógica pura, **sin `BuildContext`** (los permisos
+los pide `ScannerScreen` con `PermissionFlow.ensureAll` antes de llamar a
+`start()`, igual que la separación `PermissionService` / `PermissionFlow`).
+
+| Decisión | Por qué |
+|---|---|
+| `continuousUpdates: true`, `continuousDivisor: 1` | Sin esto el plugin reporta cada dispositivo **una vez** y el radar se congela en la primera lectura |
+| `removeIfGone: 12 s` | La lista refleja la realidad sin parpadear por paquetes perdidos |
+| `androidUsesFineLocation: false` | La ubicación ya se pidió agrupada con Bluetooth; dejar que el plugin la pida otra vez sería un segundo diálogo fuera de contexto |
+| Media móvil (EMA, factor 0,35) en el servicio | El RSSI crudo oscila 10-15 dBm en reposo. Se suaviza **una vez** en el servicio, así lista y radar comparten el mismo valor |
+| Escaneo detenido en `onPause` (`AppLifecycleListener`) | Un scan `lowLatency` es de lo más caro que puede hacerle una app a la batería |
+
+> ⚠️ **Solo BLE.** `flutter_blue_plus` escanea *Low Energy*; no hay API para leer
+> el RSSI de un descubrimiento clásico (BR/EDR). Los auriculares modernos
+> anuncian por BLE aunque el audio vaya por clásico, que es lo que hace que el
+> radar funcione con ellos. Un manos libres solo-clásico **no** aparecerá.
+
+> ⚠️ **`flutter_blue_plus` está fijado a `1.36.8` a propósito.** La 2.0.0 abandonó
+> BSD-3 por una licencia que exige pago para uso comercial (esta app lo es). No
+> subir a `^2` sin comprar la licencia. Ver el comentario en `pubspec.yaml`.
+
+### Conversión RSSI → cercanía (`domain/proximity.dart`)
+
+Rango útil **-100 dBm → -30 dBm** mapeado a 0-100 %. **No se muestra distancia en
+metros**: el RSSI depende de cuerpos, paredes y potencia del emisor, así que se
+enseña una cercanía relativa que el usuario "escala" caminando.
+Bandas: `far` (<40 %) rojo, `near` (40-72 %) ámbar, `veryNear` (≥72 %) verde,
+resueltas en un solo sitio (`proximityColor` en `signal_strength_icon.dart`).
+
+### Sonido Geiger (`data/geiger_sounder.dart`)
+
+`audioplayers` con dos assets WAV **sintéticos** generados por script
+(`dart run tool/generate_audio_assets.dart`) — no hay binarios opacos en el repo.
+
+- **Clics** (gratis): intervalo de 1100 ms a 90 ms según cercanía, en curva
+  (el oído resuelve mejor los cambios en un tren rápido). `PlayerMode.lowLatency`
+  → SoundPool en Android, imprescindible para repetir cada 90 ms.
+- **Tono continuo** (`radarContinuousLocked`): se desbloquea con **vídeo
+  recompensado** y dura **solo la sesión**. `rewardedContinuousModeProvider` **no
+  se persiste** a propósito: si sobreviviera al reinicio, el rewarded se
+  convertiría en una compra única. Premium lo tiene incluido
+  (`continuousModeUnlockedProvider`).
+
+> ⚠️ **Dos trampas de `audioplayers` que dejan el radar mudo sin dar ningún error:**
+>
+> 1. **Nunca `seek()` sobre el reproductor de clics.** En `PlayerMode.lowLatency`
+>    el backend es SoundPool, que no emite `onSeekComplete`: el `Future` se queda
+>    colgado hasta el timeout de 30 s del plugin y el clic no suena jamás. Para
+>    repetir el disparo va `stop()` y luego `resume()` — SoundPool tampoco emite
+>    evento de fin, así que el plugin sigue creyendo que reproduce y **ignora** un
+>    `resume()` suelto.
+> 2. **Toda llamada al plugin va serializada** en una única cola (`_enqueue`). Son
+>    asíncronas: si una transición pausa el tono mientras la siguiente lo arranca,
+>    la pausa puede llegar después y lo apaga.
+>
+> El contexto de audio es `mixWithOthers`: con el foco por defecto, el `stop()` de
+> cada clic lo abandonaría once veces por segundo y el audio ajeno haría duck.
+
+### Monetización enganchada aquí
+
+- **Banner:** `ScannerScreen` usa `BaseScreen` con `showBanner: true` (pantalla de
+  lista → placement permitido). `RadarScreen` lleva `showBanner: false`.
+- **Rewarded:** desbloqueo del tono continuo. La recompensa se concede **solo**
+  dentro de `onUserEarnedReward`.
+- **Interstitial:** al salir del radar con la flecha de la AppBar (transición
+  natural). El back del sistema **no** lo dispara, para no romper la animación de
+  *predictive back*.
+- **Reseña:** al alcanzar la banda `veryNear` — el usuario acaba de encontrar lo
+  que había perdido. Una vez por pantalla, nunca tras un error.
 
 ---
 
@@ -157,7 +258,7 @@ Poner `showBanner: false` en pantallas con controles densos, formularios, onboar
 - Entitlement cacheado en `flutter_secure_storage` + `restorePurchases()` al arrancar para verificar contra el store. Nunca confiar solo en un flag de `shared_preferences`.
 - **Botón "Restaurar compras" obligatorio y visible** en Ajustes (y también en el paywall). Su ausencia es motivo de rechazo.
 - Verificación local del token (app sin backend). Con servidor: validar contra la Google Play Developer API en `PremiumService.isValidPurchase`.
-- **Paywall tras un momento de valor**, nunca en el primer arranque. Puntos de entrada: enlace discreto en Home, fila en Ajustes, deep link `apptemplate://premium`.
+- **Paywall tras un momento de valor**, nunca en el primer arranque. Puntos de entrada: enlace discreto en Home, fila en Ajustes, deep link `buscaraudifonos://premium`.
 
 ### 3.4 Política
 
@@ -212,7 +313,7 @@ Para el botón explícito "Valorar la aplicación" de Ajustes se usa `openStoreL
 - Rutas declarativas en `core/routing/app_router.dart`, constantes en `app_routes.dart`. **Nunca escribir un path literal en una pantalla.**
 - Navegación por nombre: `context.goNamed(AppRoutes.settingsName)`.
 - `rootNavigatorKey` disponible para código fuera del árbol (callbacks de anuncios, stream de compras) en vez de guardar un `BuildContext` obsoleto.
-- Deep links activos desde el día 1: esquema `apptemplate://` en el manifiesto + `flutter_deeplinking_enabled`. App Links (`https`, `autoVerify`) están comentados: activarlos requiere publicar `assetlinks.json` en el dominio.
+- Deep links activos desde el día 1: esquema `buscaraudifonos://` en el manifiesto + `flutter_deeplinking_enabled`. App Links (`https`, `autoVerify`) están comentados: activarlos requiere publicar `assetlinks.json` en el dominio.
 - `errorBuilder` → `RouteErrorScreen`, para que un deep link de campaña obsoleto no crashee.
 
 ---
@@ -242,7 +343,7 @@ Todo va dentro de `runZonedGuarded`, con `FlutterError.onError` y `PlatformDispa
 
 - `compileSdk = 37` — **obligatorio**, lo exigen `permission_handler 13` y `flutter_secure_storage 11`. No bajarlo.
 - `minSdk = 24`, `targetSdk = flutter.targetSdkVersion`.
-- `applicationId = com.alejandrosahonero.app_template` — **no se puede cambiar nunca** tras publicar.
+- `applicationId = com.alejandrosahonero.buscaraudifonos` — **no se puede cambiar nunca** tras publicar.
 - Release: `isMinifyEnabled = true`, `isShrinkResources = true`, `proguard-rules.pro`.
 - **Firma:** lee `android/key.properties` (git-ignored). Si no existe, cae a la firma de debug para no romper builds locales. Antes de publicar, verificar que `key.properties` existe y que el AAB **no** va firmado con debug.
 - **Flavors `dev` / `prod`** con `applicationIdSuffix = ".dev"`, para tener ambas instaladas a la vez.

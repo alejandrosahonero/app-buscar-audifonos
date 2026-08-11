@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:app_template/core/config/ad_config.dart';
-import 'package:app_template/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/core/config/ad_config.dart';
+import 'package:buscar_audifonos/core/utils/app_logger.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 /// Google UMP (User Messaging Platform) wrapper.

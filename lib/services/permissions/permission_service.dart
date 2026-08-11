@@ -1,4 +1,4 @@
-import 'package:app_template/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/core/utils/app_logger.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Permissions this template knows how to ask for.

@@ -1,7 +1,7 @@
 {
   "@@locale": "es",
 
-  "appTitle": "App Template",
+  "appTitle": "Buscar Audífonos: Localizador",
   "@appTitle": {
     "description": "Nombre visible de la aplicación"
   },
@@ -61,6 +61,64 @@
     }
   },
   "rewardsAdUnavailable": "No hay vídeo disponible ahora mismo. Inténtalo más tarde.",
+
+  "finderScanStart": "Escanear",
+  "finderScanStop": "Detener",
+  "finderScanningTitle": "Buscando dispositivos…",
+  "finderScanningMessage": "Mantén el móvil en la mano y muévete despacio por la habitación.",
+  "finderEmptyTitle": "Ningún dispositivo a la vista",
+  "finderEmptyMessage": "Pulsa Escanear para buscar audífonos y dispositivos Bluetooth cercanos.",
+  "finderUnnamedDevice": "Dispositivo sin nombre",
+  "finderFilterNamedOnly": "Solo con nombre",
+  "finderFilterStrongSignal": "Más de {dbm} dBm",
+  "@finderFilterStrongSignal": {
+    "description": "Chip de filtro que oculta las señales muy débiles",
+    "placeholders": {
+      "dbm": {
+        "type": "int"
+      }
+    }
+  },
+  "finderHiddenCount": "{count, plural, =1{1 oculto} other{{count} ocultos}}",
+  "@finderHiddenCount": {
+    "description": "Cuántos dispositivos están escondiendo los filtros",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "finderBluetoothOff": "El Bluetooth está desactivado.",
+  "finderBluetoothTurnOn": "Activar",
+  "finderBluetoothUnsupported": "Este teléfono no tiene Bluetooth de baja energía, así que el localizador no puede funcionar.",
+  "finderPermissionReason": "Para localizar tus audífonos necesitamos buscar dispositivos Bluetooth cercanos. Android exige además el permiso de ubicación para poder escanear; la app no guarda ni comparte tu posición.",
+  "finderPermissionRequired": "Sin los permisos de Bluetooth no podemos buscar dispositivos.",
+
+  "radarSignalReading": "{rssi} dBm (media {average} dBm)",
+  "@radarSignalReading": {
+    "description": "Lectura cruda y suavizada de la señal",
+    "placeholders": {
+      "rssi": {
+        "type": "int"
+      },
+      "average": {
+        "type": "int"
+      }
+    }
+  },
+  "radarBandFar": "Lejos",
+  "radarBandNear": "Cerca",
+  "radarBandVeryNear": "Muy cerca",
+  "radarHint": "Camina despacio: si el porcentaje sube, vas bien.",
+  "radarSignalLostTitle": "Señal perdida",
+  "radarSignalLostMessage": "El dispositivo ha dejado de emitir. Vuelve a la última zona donde la señal era más fuerte.",
+  "radarSoundOn": "Sonido activado",
+  "radarSoundOff": "Sonido silenciado",
+  "radarContinuousMode": "Pitido continuo activado",
+  "radarContinuousLocked": "Desbloquear pitido continuo",
+  "radarContinuousDialogTitle": "¿Activar el pitido continuo?",
+  "radarContinuousDialogBody": "Verás un vídeo corto y desbloquearás el tono continuo durante el resto de la sesión. Es más fácil de seguir en sitios ruidosos.",
+  "radarContinuousEnabled": "Pitido continuo activado.",
 
   "permissionsTitle": "Permisos",
   "permissionBluetooth": "Bluetooth",

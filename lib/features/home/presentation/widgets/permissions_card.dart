@@ -1,9 +1,9 @@
-import 'package:app_template/core/extensions/build_context_x.dart';
-import 'package:app_template/core/theme/app_spacing.dart';
-import 'package:app_template/core/widgets/permission_dialogs.dart';
-import 'package:app_template/core/widgets/section_card.dart';
-import 'package:app_template/services/permissions/permission_providers.dart';
-import 'package:app_template/services/permissions/permission_service.dart';
+import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
+import 'package:buscar_audifonos/core/theme/app_spacing.dart';
+import 'package:buscar_audifonos/core/widgets/permission_dialogs.dart';
+import 'package:buscar_audifonos/core/widgets/section_card.dart';
+import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
+import 'package:buscar_audifonos/services/permissions/permission_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

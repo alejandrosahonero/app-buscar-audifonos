@@ -1,4 +1,4 @@
-# app_template
+# Buscar Audífonos: Localizador
 
 Plantilla base (Base Starter Template) en Flutter para desarrollar y publicar aplicaciones Android en Google Play con rapidez.
 
@@ -13,7 +13,7 @@ Trae preconfigurado lo que todas las apps repiten: monetización (AdMob + compra
 | Área | Implementación |
 |---|---|
 | Estado | Riverpod 3 (`Provider` / `NotifierProvider` / `AsyncNotifierProvider`) |
-| Navegación | `go_router` con rutas tipadas y deep links (`apptemplate://`) |
+| Navegación | `go_router` con rutas tipadas y deep links (`buscaraudifonos://`) |
 | Anuncios | `AdsService`: banner adaptativo, interstitial con pacing, rewarded con callback |
 | Consentimiento | UMP SDK (incluido en `google_mobile_ads`) + "Opciones de privacidad" en Ajustes |
 | Compras | `in_app_purchase`: producto no consumible `premium_remove_ads` + restaurar compras |
