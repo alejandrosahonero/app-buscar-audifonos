@@ -36,11 +36,11 @@ class ScanFilterBar extends ConsumerWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
           FilterChip(
-            selected: filter.hideUnnamed,
+            selected: filter.hideUnidentified,
             onSelected: (bool value) =>
-                controller.setHideUnnamed(value: value).ignore(),
+                controller.setHideUnidentified(value: value).ignore(),
             avatar: const Icon(Icons.label_outline, size: 18),
-            label: Text(context.l10n.finderFilterNamedOnly),
+            label: Text(context.l10n.finderFilterIdentifiedOnly),
           ),
           FilterChip(
             selected: filter.hideWeakSignal,

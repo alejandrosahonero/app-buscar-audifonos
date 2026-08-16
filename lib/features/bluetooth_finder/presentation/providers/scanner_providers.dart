@@ -68,23 +68,23 @@ final NotifierProvider<ScanFilterController, ScanFilter> scanFilterProvider =
 /// launch. Written through `KeyValueStore`, which is already loaded before the
 /// first frame.
 class ScanFilterController extends Notifier<ScanFilter> {
-  static const String _hideUnnamedKey = 'finder_hide_unnamed';
+  static const String _hideUnidentifiedKey = 'finder_hide_unidentified';
   static const String _hideWeakKey = 'finder_hide_weak_signal';
 
   @override
   ScanFilter build() {
     final store = ref.watch(keyValueStoreProvider);
     return ScanFilter(
-      hideUnnamed: store.getBool(_hideUnnamedKey, fallback: true),
+      hideUnidentified: store.getBool(_hideUnidentifiedKey, fallback: true),
       hideWeakSignal: store.getBool(_hideWeakKey, fallback: true),
     );
   }
 
-  Future<void> setHideUnnamed({required bool value}) async {
-    state = state.copyWith(hideUnnamed: value);
+  Future<void> setHideUnidentified({required bool value}) async {
+    state = state.copyWith(hideUnidentified: value);
     await ref
         .read(keyValueStoreProvider)
-        .setBool(_hideUnnamedKey, value: value);
+        .setBool(_hideUnidentifiedKey, value: value);
   }
 
   Future<void> setHideWeakSignal({required bool value}) async {

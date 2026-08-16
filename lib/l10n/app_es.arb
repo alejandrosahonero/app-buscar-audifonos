@@ -68,8 +68,58 @@
   "finderScanningMessage": "Mantén el móvil en la mano y muévete despacio por la habitación.",
   "finderEmptyTitle": "Ningún dispositivo a la vista",
   "finderEmptyMessage": "Pulsa Escanear para buscar audífonos y dispositivos Bluetooth cercanos.",
-  "finderUnnamedDevice": "Dispositivo sin nombre",
-  "finderFilterNamedOnly": "Solo con nombre",
+  "finderUnnamedDevice": "Dispositivo Bluetooth",
+  "@finderUnnamedDevice": {
+    "description": "Nombre de un dispositivo del que no sabemos ni la marca ni el tipo. También es la etiqueta de la categoría desconocida."
+  },
+  "finderDeviceNameWithVendor": "{category} de {vendor}",
+  "@finderDeviceNameWithVendor": {
+    "description": "Nombre compuesto para un dispositivo que no anuncia el suyo, p. ej. «Auriculares de Sony»",
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "vendor": {
+        "type": "String"
+      }
+    }
+  },
+  "finderCategoryEarbuds": "Auriculares inalámbricos",
+  "finderCategoryHeadphones": "Auriculares",
+  "finderCategorySpeaker": "Altavoz",
+  "finderCategoryHearingAid": "Audífono",
+  "finderCategoryWatch": "Reloj",
+  "finderCategoryFitnessBand": "Pulsera de actividad",
+  "finderCategoryPhone": "Teléfono",
+  "finderCategoryComputer": "Ordenador",
+  "finderCategoryTablet": "Tablet",
+  "finderCategoryTv": "Televisor",
+  "finderCategoryKeyboard": "Teclado",
+  "finderCategoryMouse": "Ratón",
+  "finderCategoryGamepad": "Mando",
+  "finderCategoryTracker": "Localizador",
+  "finderCategoryBeacon": "Baliza",
+  "finderCategoryHealthSensor": "Sensor de salud",
+  "finderCategoryCarKit": "Equipo de coche",
+  "finderCategorySmartHome": "Dispositivo del hogar",
+
+  "finderMetaBattery": "{percent} %",
+  "@finderMetaBattery": {
+    "description": "Nivel de batería anunciado por el dispositivo",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "finderMetaPaired": "Vinculado",
+  "finderMetaPairable": "Emparejable",
+  "finderTraitFastPair": "Fast Pair",
+  "finderTraitSwiftPair": "Swift Pair",
+  "finderTraitFindMy": "Find My",
+  "finderTraitLeAudio": "LE Audio",
+
+  "finderFilterIdentifiedOnly": "Solo identificados",
   "finderFilterStrongSignal": "Más de {dbm} dBm",
   "@finderFilterStrongSignal": {
     "description": "Chip de filtro que oculta las señales muy débiles",

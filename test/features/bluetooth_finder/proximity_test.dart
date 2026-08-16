@@ -1,3 +1,4 @@
+import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/proximity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/scan_filter.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 DiscoveredDevice _device({String name = 'Buds', required int rssi}) =>
     DiscoveredDevice.firstSeen(
       id: 'AA:BB:CC:DD:EE:FF',
-      name: name,
+      identity: DeviceIdentity(advertisedName: name),
       rssi: rssi,
       lastSeen: DateTime(2026),
     );
@@ -56,18 +57,24 @@ void main() {
     });
 
     test('merging never erases a name with a later empty advertisement', () {
-      final DiscoveredDevice merged = _device(
-        rssi: -70,
-      ).merge(name: '', rssi: -68, lastSeen: DateTime(2026, 1, 2));
+      final DiscoveredDevice merged = _device(rssi: -70).merge(
+        identity: DeviceIdentity.unknown,
+        rssi: -68,
+        isPaired: false,
+        lastSeen: DateTime(2026, 1, 2),
+      );
 
-      expect(merged.name, 'Buds');
+      expect(merged.identity.advertisedName, 'Buds');
       expect(merged.rssi, -68);
     });
 
     test('merging moves the average towards the new sample', () {
-      final DiscoveredDevice merged = _device(
-        rssi: -90,
-      ).merge(name: 'Buds', rssi: -50, lastSeen: DateTime(2026, 1, 2));
+      final DiscoveredDevice merged = _device(rssi: -90).merge(
+        identity: const DeviceIdentity(advertisedName: 'Buds'),
+        rssi: -50,
+        isPaired: false,
+        lastSeen: DateTime(2026, 1, 2),
+      );
 
       expect(merged.smoothedRssi, greaterThan(-90));
       expect(merged.smoothedRssi, lessThan(-50));
@@ -75,7 +82,7 @@ void main() {
   });
 
   group('ScanFilter', () {
-    test('the defaults drop unnamed and very weak devices', () {
+    test('the defaults drop unidentifiable and very weak devices', () {
       const ScanFilter filter = ScanFilter();
 
       expect(filter.allows(_device(rssi: -50)), isTrue);
@@ -85,7 +92,7 @@ void main() {
 
     test('turning both filters off lets everything through', () {
       const ScanFilter filter = ScanFilter(
-        hideUnnamed: false,
+        hideUnidentified: false,
         hideWeakSignal: false,
       );
 
@@ -100,11 +107,10 @@ void main() {
         _device(name: 'mid', rssi: -60),
       ]);
 
-      expect(sorted.map((DiscoveredDevice d) => d.name), <String>[
-        'strong',
-        'mid',
-        'weak',
-      ]);
+      expect(
+        sorted.map((DiscoveredDevice d) => d.identity.advertisedName),
+        <String>['strong', 'mid', 'weak'],
+      );
     });
   });
 }

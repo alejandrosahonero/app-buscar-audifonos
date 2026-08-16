@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:buscar_audifonos/core/utils/app_logger.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/data/advertisement_mapper.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -63,6 +65,7 @@ class BluetoothScanService {
 
   Map<String, DiscoveredDevice> _known = <String, DiscoveredDevice>{};
   List<DiscoveredDevice> _latest = const <DiscoveredDevice>[];
+  Set<String> _bonded = const <String>{};
   bool _logConfigured = false;
 
   /// A device is dropped from the list after this long without advertising.
@@ -126,6 +129,12 @@ class BluetoothScanService {
     _known = <String, DiscoveredDevice>{};
     _emit(const <DiscoveredDevice>[]);
 
+    // Read once per scan rather than per packet: the bond list only changes
+    // when the user pairs something, and this call crosses the platform
+    // channel. Awaited before the first result arrives so no tile ever has to
+    // re-render just to gain its "paired" badge.
+    _bonded = await bondedDeviceIds();
+
     try {
       await FlutterBluePlus.startScan(
         // The whole point of this app: keep receiving duplicate advertisements
@@ -180,23 +189,23 @@ class BluetoothScanService {
 
     for (final ScanResult result in results) {
       final String id = result.device.remoteId.str;
-      // `platformName` is the cached GATT name (survives across packets);
-      // `advName` is what this particular advertisement carried. Either can be
-      // empty, so prefer whichever we actually have.
-      final String name = result.device.platformName.isNotEmpty
-          ? result.device.platformName
-          : result.advertisementData.advName;
+      final DeviceIdentity identity = DeviceIdentity.resolve(
+        advertisementFactsFrom(result),
+      );
+      final bool isPaired = _bonded.contains(id);
 
       final DiscoveredDevice? previous = _known[id];
       next[id] = previous == null
           ? DiscoveredDevice.firstSeen(
               id: id,
-              name: name,
+              identity: identity,
+              isPaired: isPaired,
               rssi: result.rssi,
               lastSeen: result.timeStamp,
             )
           : previous.merge(
-              name: name,
+              identity: identity,
+              isPaired: isPaired,
               rssi: result.rssi,
               lastSeen: result.timeStamp,
             );

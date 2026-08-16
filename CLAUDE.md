@@ -43,8 +43,10 @@ lib/
 │                             # PermissionFlow (diálogos de permisos)
 ├── features/
 │   ├── bluetooth_finder/     # ⭐ FEATURE PRINCIPAL — radar RSSI (ver §1.1)
-│   │   ├── data/             # BluetoothScanService, GeigerSounder
-│   │   ├── domain/           # DiscoveredDevice, Proximity, ScanFilter
+│   │   ├── data/             # BluetoothScanService, GeigerSounder,
+│   │   │                     # advertisement_mapper (plugin → dominio)
+│   │   ├── domain/           # DiscoveredDevice, Proximity, ScanFilter,
+│   │   │                     # DeviceIdentity + BluetoothRegistry (ver §1.2)
 │   │   └── presentation/     # ScannerScreen (home), RadarScreen, providers
 │   ├── home/presentation/    # feature de ejemplo de la plantilla (HUÉRFANA:
 │   │                         # ya no está enrutada, ver §1.1)
@@ -110,6 +112,60 @@ los pide `ScannerScreen` con `PermissionFlow.ensureAll` antes de llamar a
 > ⚠️ **`flutter_blue_plus` está fijado a `1.36.8` a propósito.** La 2.0.0 abandonó
 > BSD-3 por una licencia que exige pago para uso comercial (esta app lo es). No
 > subir a `^2` sin comprar la licencia. Ver el comentario en `pubspec.yaml`.
+
+## 1.2 Identificación de dispositivos (`domain/device_identity.dart`)
+
+Cada anuncio BLE se traduce a un `DeviceIdentity`: **qué** es el dispositivo, de
+**quién** es la marca, **cuánta** batería anuncia y qué sabe hacer. Es lo que
+alimenta el icono, el nombre y los chips de cada fila.
+
+**Regla de privacidad del feature:** la lista muestra hechos accionables y
+**nunca los identificadores que hay debajo**. La MAC / UUID (`DiscoveredDevice.id`)
+sirve para enrutar al radar y para keyear la lista, y **no se pinta en ninguna
+pantalla**. Tampoco se exponen payloads crudos ni identificadores rotatorios: son
+números largos que no le dicen nada a una persona.
+
+| Archivo | Qué hace |
+|---|---|
+| `domain/advertisement_facts.dart` | Vista del anuncio **sin tipos del plugin** (DTO de entrada). No incluye la dirección: así no puede filtrarse a la UI por accidente |
+| `data/advertisement_mapper.dart` | Único sitio que toca `AdvertisementData` de `flutter_blue_plus`. Descarta los UUID de 128 bits (privados, no etiquetables) |
+| `domain/bluetooth_registry.dart` | Tablas curadas: company IDs → marca, appearance GAP → categoría, UUIDs de servicio → categoría/rasgo, modelos Apple, palabras clave del nombre |
+| `domain/device_identity.dart` | Resuelve y fusiona la identidad |
+| `domain/device_taxonomy.dart` | `DeviceCategory` (19) y `DeviceTrait` |
+| `presentation/widgets/device_identity_view.dart` | Icono, etiquetas y chips. Única fuente de verdad de cómo se llama un dispositivo |
+
+**Orden de resolución de la categoría** (de más fiable a menos, en
+`DeviceIdentity.resolve`). No reordenar sin motivo:
+
+1. **Appearance GAP** — valor que el fabricante eligió de la lista del SIG.
+2. **Manufacturer data** — Apple y Microsoft describen sus propios dispositivos.
+3. **UUIDs de servicio** — estándar, pero cada dispositivo anuncia lo que quiere.
+4. **Nombre anunciado** — heurística, por eso va última.
+
+Decisiones que conviene no deshacer:
+
+- **`mergedWith` hace la identidad "pegajosa".** BLE reparte la descripción entre
+  el anuncio y el scan response, que llegan en paquetes distintos: resolver cada
+  paquete aislado haría parpadear la fila entre dos medias identidades. Los
+  valores conocidos se mantienen y los rasgos se acumulan; un escaneo nuevo
+  parte de cero.
+- **Los fabricantes de chips están excluidos de la tabla de marcas** (CSR,
+  Realtek, Bluetrum, Actions). Es el chip de dentro, no la marca de la caja:
+  etiquetar unos auriculares genéricos como "Qualcomm" sería mentir con
+  seguridad.
+- **Find My nunca pisa una categoría ya resuelta.** Un AirPod perdido emite en la
+  red Find My exactamente igual que un AirTag, y sigue siendo un auricular.
+- **La batería solo sale del Battery Service estándar** (`0x180F`). Apple cifra
+  parte del registro de batería en firmware reciente: un porcentaje equivocado es
+  peor que ninguno.
+- **Los IDs de modelo de Apple no son públicos.** La tabla es la comunitaria y se
+  limita a los modelos con consenso amplio; lo que no reconoce degrada a
+  "Auriculares de Apple", nunca a un nombre incorrecto. **Verificar contra
+  hardware real antes de ampliarla.**
+- **`ScanFilter.hideUnidentified` sustituyó a `hideUnnamed`.** Unos AirPods en su
+  estuche cerrado emiten sin nombre pero sí identifican su modelo: ocultarlos
+  rompería el caso de uso principal. A la inversa, marca sola **no** basta
+  (`isIdentified`): todos los iPhone de la sala anuncian "Apple" y nada más.
 
 ### Conversión RSSI → cercanía (`domain/proximity.dart`)
 

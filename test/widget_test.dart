@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buscar_audifonos/app.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
@@ -68,7 +69,9 @@ DiscoveredDevice _device({
   required int rssi,
 }) => DiscoveredDevice.firstSeen(
   id: id,
-  name: name,
+  // A bare advertised name is all these list tests need: an empty one is
+  // exactly the "we could not identify this at all" case the filter drops.
+  identity: DeviceIdentity(advertisedName: name),
   rssi: rssi,
   lastSeen: DateTime(2026),
 );

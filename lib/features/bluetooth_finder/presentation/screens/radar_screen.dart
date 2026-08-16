@@ -4,10 +4,12 @@ import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
 import 'package:buscar_audifonos/core/theme/app_spacing.dart';
 import 'package:buscar_audifonos/core/widgets/base_screen.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/geiger_sounder.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/proximity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/continuous_mode_controller.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/radar_view.dart';
 import 'package:buscar_audifonos/services/ads/ads_providers.dart';
 import 'package:buscar_audifonos/services/ads/ads_service.dart';
@@ -38,9 +40,11 @@ class RadarScreen extends ConsumerStatefulWidget {
 class _RadarScreenState extends ConsumerState<RadarScreen> {
   final GeigerSounder _sounder = GeigerSounder();
 
-  /// Name captured on entry, so the header does not go blank the moment the
-  /// device stops advertising.
-  String? _lastKnownName;
+  /// Description captured on entry, so the header does not go blank the moment
+  /// the device stops advertising — which is exactly when the user is staring
+  /// at this screen hardest.
+  DeviceIdentity? _lastKnownIdentity;
+  bool _lastKnownPaired = false;
   bool _soundOn = false;
   bool _reviewRequested = false;
 
@@ -53,7 +57,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     final DiscoveredDevice? current = ref.read(
       deviceByIdProvider(widget.deviceId),
     );
-    if (current != null && current.hasName) _lastKnownName = current.name;
+    _lastKnownIdentity = current?.identity;
+    _lastKnownPaired = current?.isPaired ?? false;
 
     // Off the first frame: loading the audio sources touches the platform.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -81,7 +86,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     ) {
       if (next == null) return;
       _sounder.updateCloseness(next.closeness);
-      _rememberName(next);
+      _rememberIdentity(next);
       _maybeRequestReview(next);
     });
 
@@ -90,8 +95,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     );
     final bool unlocked = ref.watch(continuousModeUnlockedProvider);
 
+    final DeviceIdentity identity =
+        _lastKnownIdentity ?? DeviceIdentity.unknown;
+
     return BaseScreen(
-      title: _lastKnownName ?? context.l10n.finderUnnamedDevice,
+      title: deviceDisplayName(context, identity),
       showBanner: false,
       // Only the app bar button runs the "leaving is a value action" path.
       // System back is deliberately left alone so Android's predictive back
@@ -103,12 +111,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             children: <Widget>[
-              Text(
-                widget.deviceId,
-                style: context.texts.bodySmall?.copyWith(
-                  color: context.colors.onSurfaceVariant,
-                ),
-              ),
+              _IdentityHeader(identity: identity, isPaired: _lastKnownPaired),
               const SizedBox(height: AppSpacing.md),
               Expanded(
                 child: Center(
@@ -136,11 +139,17 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     );
   }
 
-  /// Keeps the last resolved name so the header does not go blank the moment
-  /// the device stops advertising.
-  void _rememberName(DiscoveredDevice device) {
-    if (!device.hasName || device.name == _lastKnownName) return;
-    setState(() => _lastKnownName = device.name);
+  /// Keeps the last resolved description so the header does not go blank the
+  /// moment the device stops advertising.
+  void _rememberIdentity(DiscoveredDevice device) {
+    if (device.identity == _lastKnownIdentity &&
+        device.isPaired == _lastKnownPaired) {
+      return;
+    }
+    setState(() {
+      _lastKnownIdentity = device.identity;
+      _lastKnownPaired = device.isPaired;
+    });
   }
 
   void _toggleSound() {
@@ -224,6 +233,45 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     await ref.read(adsServiceProvider).registerActionAndMaybeShowInterstitial();
     if (!mounted) return;
     context.pop();
+  }
+}
+
+/// What the device *is*, under the title.
+///
+/// This is where the raw address used to be printed. An address identifies
+/// hardware and tells a person nothing they can use, so it was replaced by the
+/// facts they can: kind, brand, battery, whether it is already theirs.
+class _IdentityHeader extends StatelessWidget {
+  const _IdentityHeader({required this.identity, required this.isPaired});
+
+  final DeviceIdentity identity;
+  final bool isPaired;
+
+  @override
+  Widget build(BuildContext context) {
+    final String? kind = deviceKindLine(context, identity);
+
+    return Column(
+      children: <Widget>[
+        if (kind != null)
+          Text(
+            kind,
+            textAlign: TextAlign.center,
+            style: context.texts.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+        const SizedBox(height: AppSpacing.sm),
+        // Room for one more chip than the list: this screen has the width and
+        // the user has already committed to this device.
+        DeviceMetaChips(
+          identity: identity,
+          isPaired: isPaired,
+          maxChips: 4,
+          alignment: WrapAlignment.center,
+        ),
+      ],
+    );
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
 import 'package:buscar_audifonos/core/theme/app_spacing.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/signal_strength_icon.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +9,11 @@ import 'package:flutter/material.dart';
 ///
 /// Its own widget rather than a `_buildTile()` method so a signal update only
 /// repaints the tile that changed, not the whole list.
+///
+/// Three layers of information, in the order a person reads them: what it is
+/// (icon + name), what kind of thing it is (kind + brand), and the details
+/// worth acting on (battery, already paired, pairing protocols). The device
+/// address is deliberately absent — see [DiscoveredDevice.id].
 class DeviceTile extends StatelessWidget {
   const DeviceTile({required this.device, required this.onTap, super.key});
 
@@ -16,37 +22,54 @@ class DeviceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String? summary = deviceSummaryLine(context, device.identity);
+
     return ListTile(
       onTap: onTap,
-      leading: SignalStrengthIcon(closeness: device.closeness),
+      isThreeLine: true,
+      leading: DeviceAvatar(
+        category: device.identity.category,
+        band: device.band,
+      ),
       title: Text(
-        device.hasName ? device.name : context.l10n.finderUnnamedDevice,
+        deviceDisplayName(context, device.identity),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: device.hasName
-            ? null
-            : context.texts.bodyLarge?.copyWith(
-                fontStyle: FontStyle.italic,
+        style: context.texts.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (summary != null)
+            Text(
+              summary,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.texts.bodySmall?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
-      ),
-      subtitle: Text(
-        // MAC / UUID plus the raw reading: two identical earbuds are only
-        // distinguishable by their address.
-        '${device.id}  ·  ${device.rssi} dBm',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          DeviceMetaChips(identity: device.identity, isPaired: device.isPaired),
+        ],
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
-            '${device.closenessPercent} %',
-            style: context.texts.titleMedium?.copyWith(
-              color: proximityColor(context, device.band),
-            ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Text(
+                '${device.closenessPercent} %',
+                style: context.texts.titleMedium?.copyWith(
+                  color: proximityColor(context, device.band),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              SignalStrengthIcon(closeness: device.closeness),
+            ],
           ),
-          const SizedBox(width: AppSpacing.xs),
           const Icon(Icons.chevron_right),
         ],
       ),

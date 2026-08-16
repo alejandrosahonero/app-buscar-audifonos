@@ -5,25 +5,29 @@ import 'package:flutter/foundation.dart';
 ///
 /// A busy street produces dozens of anonymous beacons per minute. Both filters
 /// are on by default because the app is a *finder*: the target is almost always
-/// a named device the user is standing near.
+/// an identifiable device the user is standing near.
 @immutable
 class ScanFilter {
-  const ScanFilter({this.hideUnnamed = true, this.hideWeakSignal = true});
+  const ScanFilter({this.hideUnidentified = true, this.hideWeakSignal = true});
 
   /// Anything below this is too far to walk towards: the reading is dominated
   /// by noise and the radar would send the user in a random direction.
   static const int weakSignalThreshold = -95;
 
-  final bool hideUnnamed;
+  /// Hides advertisers we could not describe at all. Broader than "has no
+  /// name": a pair of AirPods sitting in a closed case advertises anonymously
+  /// but still identifies its model, and hiding *that* would defeat the app.
+  final bool hideUnidentified;
   final bool hideWeakSignal;
 
-  ScanFilter copyWith({bool? hideUnnamed, bool? hideWeakSignal}) => ScanFilter(
-    hideUnnamed: hideUnnamed ?? this.hideUnnamed,
-    hideWeakSignal: hideWeakSignal ?? this.hideWeakSignal,
-  );
+  ScanFilter copyWith({bool? hideUnidentified, bool? hideWeakSignal}) =>
+      ScanFilter(
+        hideUnidentified: hideUnidentified ?? this.hideUnidentified,
+        hideWeakSignal: hideWeakSignal ?? this.hideWeakSignal,
+      );
 
   bool allows(DiscoveredDevice device) {
-    if (hideUnnamed && !device.hasName) return false;
+    if (hideUnidentified && !device.identity.isIdentified) return false;
     // Filtered on the smoothed value: a single unlucky packet should not make a
     // device blink out of the list.
     if (hideWeakSignal && device.smoothedRssi < weakSignalThreshold) {
@@ -47,9 +51,9 @@ class ScanFilter {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ScanFilter &&
-          other.hideUnnamed == hideUnnamed &&
+          other.hideUnidentified == hideUnidentified &&
           other.hideWeakSignal == hideWeakSignal;
 
   @override
-  int get hashCode => Object.hash(hideUnnamed, hideWeakSignal);
+  int get hashCode => Object.hash(hideUnidentified, hideWeakSignal);
 }
