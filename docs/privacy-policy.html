@@ -1,74 +1,812 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Política de privacidad / Privacy Policy de Buscar Audífonos: Localizador">
+  <meta name="color-scheme" content="light dark">
+  <title>Política de privacidad | Buscar Audífonos: Localizador</title>
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --surface: #ffffff;
+      --text: #18181b;
+      --muted: #5f6368;
+      --border: #e4e4e7;
+      --accent: #3f51b5;
+      --accent-soft: #eef0ff;
+      --max: 920px;
+    }
 
-    <title>Política de privacidad - Buscar Audífonos: Localizador</title>
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111318;
+        --surface: #181b22;
+        --text: #f5f6f8;
+        --muted: #b5bac4;
+        --border: #30343d;
+        --accent: #aeb8ff;
+        --accent-soft: #242a46;
+      }
+    }
 
-    <style>
-        body {
-          font-family: Arial, sans-serif;
-          max-width: 800px;
-          margin: 40px auto;
-          padding: 0 20px;
-          line-height: 1.6;
-        }
+    * { box-sizing: border-box; }
 
-        h1, h2 {
-          margin-top: 30px;
-        }
-    </style>
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    a { color: var(--accent); }
+
+    .wrap {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 56px 0 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      font-size: .82rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.08;
+      margin: 0 0 14px;
+    }
+
+    h2 {
+      margin-top: 2.2rem;
+      font-size: 1.55rem;
+      line-height: 1.25;
+    }
+
+    h3 {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    p, li { max-width: 78ch; }
+
+    .meta {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .language-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+
+    .language-nav a {
+      display: inline-block;
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: clamp(22px, 4vw, 42px);
+      margin: 20px 0 34px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.04);
+    }
+
+    .notice {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin: 18px 0 24px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 22px 0;
+    }
+
+    .summary > div {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .summary strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    ul { padding-left: 1.25rem; }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 58px 0;
+    }
+
+    footer {
+      color: var(--muted);
+      padding: 0 0 52px;
+      font-size: .94rem;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .92em;
+    }
+
+    @media (max-width: 650px) {
+      header { padding-top: 36px; }
+      .summary { grid-template-columns: 1fr; }
+      .card { border-radius: 14px; }
+    }
+  </style>
 </head>
 
 <body>
+  <header class="wrap">
+    <p class="eyebrow">Buscar Audífonos: Localizador</p>
+    <h1>Política de privacidad<br><span lang="en">Privacy Policy</span></h1>
+    <p class="meta">Última actualización / Last updated: 17 de agosto de 2026 / 17 August 2026</p>
+    <nav class="language-nav" aria-label="Idioma / Language">
+      <a href="#es">Español</a>
+      <a href="#en">English</a>
+    </nav>
+  </header>
 
-<h1>Política de privacidad</h1>
+  <main class="wrap">
 
-<p>Última actualización: 17 de agosto de 2026</p>
+    <section id="es" class="card" lang="es">
+      <h2>Política de privacidad — Español</h2>
 
-<h2>1. Responsable</h2>
+      <p>
+        Esta Política de privacidad explica cómo <strong>Buscar Audífonos: Localizador</strong>
+        ("la Aplicación") trata la información cuando utilizas sus funciones. El responsable de
+        la Aplicación es <strong>Alejandro Sahonero</strong>, con base en España.
+      </p>
 
-<p>
-    Esta aplicación es gestionada por [TU EMPRESA / TU NOMBRE].
-</p>
+      <div class="notice">
+        <strong>Resumen:</strong> la Aplicación no requiere registro ni cuenta de usuario y no dispone
+        de un servidor propio al que se envíen los dispositivos Bluetooth encontrados. El escaneo de
+        dispositivos, el cálculo de cercanía y los favoritos se gestionan localmente en el dispositivo.
+        Determinados servicios de terceros, en particular Google AdMob y Firebase Crashlytics, pueden
+        tratar datos técnicos y de dispositivo según se explica a continuación.
+      </div>
 
-<h2>2. Datos que recopilamos</h2>
+      <div class="summary" aria-label="Resumen de privacidad">
+        <div><strong>Sin cuentas</strong>No solicitamos nombre, contraseña ni perfil para usar la Aplicación.</div>
+        <div><strong>Bluetooth local</strong>Los dispositivos detectados y su intensidad de señal no se envían a un servidor propio.</div>
+        <div><strong>Ubicación</strong>El permiso de ubicación puede solicitarse únicamente para permitir el escaneo Bluetooth cuando Android lo requiera.</div>
+        <div><strong>Servicios de Google</strong>AdMob/UMP, Google Play y Firebase Crashlytics pueden tratar determinados datos técnicos.</div>
+      </div>
 
-<p>
-    [Explica qué datos recopila tu aplicación.]
-</p>
+      <h2>1. Responsable y contacto</h2>
+      <p>
+        <strong>Responsable:</strong> Alejandro Sahonero<br>
+        <strong>País:</strong> España<br>
+        <strong>Contacto de privacidad:</strong>
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>
+      </p>
+      <p>
+        Puedes utilizar esta dirección para realizar consultas sobre privacidad o ejercer los derechos
+        que te correspondan conforme a la legislación aplicable.
+      </p>
 
-<h2>3. Finalidad de los datos</h2>
+      <h2>2. Información que trata la funcionalidad principal</h2>
 
-<p>
-    [Explica para qué utilizas los datos.]
-</p>
+      <h3>2.1 Escaneo Bluetooth</h3>
+      <p>
+        La Aplicación utiliza Bluetooth Low Energy (BLE) para detectar dispositivos cercanos y ayudarte
+        a localizar, entre otros, audífonos y otros dispositivos Bluetooth compatibles. Durante el escaneo,
+        la Aplicación puede procesar localmente información incluida en los anuncios Bluetooth que el sistema
+        operativo pone a disposición de la app, como:
+      </p>
+      <ul>
+        <li>identificador del dispositivo expuesto por el sistema operativo (por ejemplo, MAC o UUID, según la plataforma);</li>
+        <li>nombre anunciado del dispositivo, cuando esté disponible;</li>
+        <li>fabricante, modelo, categoría o servicios Bluetooth anunciados, cuando estén disponibles;</li>
+        <li>intensidad de señal recibida (RSSI), utilizada para calcular una indicación aproximada de cercanía;</li>
+        <li>nivel de batería u otras características anunciadas por el propio dispositivo, cuando estén disponibles.</li>
+      </ul>
+      <p>
+        Esta información se utiliza para mostrar dispositivos cercanos, identificarlos de forma útil y
+        estimar una <strong>cercanía relativa</strong>. La Aplicación no pretende calcular una ubicación
+        geográfica exacta ni una distancia física exacta a partir del RSSI.
+      </p>
+      <p>
+        <strong>Estos datos de escaneo Bluetooth no se envían a un servidor operado por Alejandro Sahonero.</strong>
+        El identificador técnico del dispositivo se utiliza internamente para distinguir dispositivos y
+        gestionar funciones como el radar y los favoritos, pero no se muestra al usuario como parte normal
+        de la interfaz.
+      </p>
 
-<h2>4. Servicios de terceros</h2>
+      <h3>2.2 Permiso de ubicación</h3>
+      <p>
+        En determinadas versiones de Android, el sistema operativo puede exigir permiso de ubicación para
+        descubrir dispositivos Bluetooth cercanos. Cuando la Aplicación solicite este permiso, se utilizará
+        <strong>exclusivamente para habilitar el escaneo Bluetooth</strong>.
+      </p>
+      <p>
+        La Aplicación no utiliza el permiso de ubicación para obtener, almacenar o crear un historial de tus
+        coordenadas GPS, no realiza seguimiento de ubicación en segundo plano y no envía tu ubicación precisa
+        a un servidor propio. La publicidad de terceros puede estimar una ubicación general mediante datos como
+        la dirección IP, tal y como se describe en la sección de publicidad.
+      </p>
 
-<p>
-    [Firebase, Google Analytics, APIs externas, etc.]
-</p>
+      <h3>2.3 Favoritos y preferencias locales</h3>
+      <p>
+        Puedes guardar dispositivos como favoritos para reconocerlos en futuros escaneos. Para ello, la
+        Aplicación almacena localmente en el espacio privado de la app el identificador técnico necesario
+        para reconocer el dispositivo y datos descriptivos como su nombre, modelo, marca o categoría.
+      </p>
+      <p>
+        También pueden almacenarse localmente preferencias de la Aplicación, como el tema, configuraciones
+        de uso y el estado necesario para recordar si se ha adquirido la opción premium de quitar anuncios.
+        Estos datos permanecen en el dispositivo salvo cuando sea necesario consultar a la tienda de
+        aplicaciones para verificar una compra.
+      </p>
 
-<h2>5. Conservación de los datos</h2>
+      <h2>3. Publicidad: Google AdMob y gestión del consentimiento</h2>
+      <p>
+        La Aplicación utiliza <strong>Google AdMob / Google Mobile Ads SDK</strong> para mostrar anuncios y
+        <strong>Google User Messaging Platform (UMP)</strong> para gestionar opciones de privacidad y
+        consentimiento cuando resulte aplicable.
+      </p>
+      <p>
+        Según la configuración, el consentimiento del usuario, la región y las reglas aplicables, Google
+        puede tratar información como:
+      </p>
+      <ul>
+        <li>dirección IP, que puede utilizarse para estimar una ubicación general;</li>
+        <li>identificadores del dispositivo o publicitarios, cuando estén disponibles y permitidos;</li>
+        <li>interacciones con la Aplicación y con los anuncios, como inicios, toques o visualizaciones;</li>
+        <li>datos sobre anuncios mostrados;</li>
+        <li>información de diagnóstico y rendimiento de la app o del SDK.</li>
+      </ul>
+      <p>
+        Estos datos pueden utilizarse para proporcionar publicidad, incluida publicidad personalizada cuando
+        hayas dado el consentimiento requerido, así como para medición, analítica, limitación de frecuencia,
+        seguridad y prevención del fraude.
+      </p>
+      <p>
+        Cuando la normativa lo requiera, se mostrará un mecanismo de consentimiento antes de utilizar datos
+        para personalización publicitaria. La Aplicación incluye una opción de privacidad desde la que, cuando
+        corresponda, podrás revisar o modificar tus elecciones. Retirar el consentimiento no afecta a la
+        licitud del tratamiento realizado antes de su retirada.
+      </p>
+      <p>
+        Los anuncios no personalizados pueden seguir implicando determinados tratamientos técnicos necesarios,
+        por ejemplo para limitación de frecuencia, informes agregados, seguridad o prevención del fraude.
+      </p>
+      <p>
+        Más información:
+        <a href="https://policies.google.com/privacy" rel="noopener noreferrer">Política de Privacidad de Google</a>
+        y
+        <a href="https://policies.google.com/technologies/partner-sites" rel="noopener noreferrer">cómo utiliza Google la información de sitios o apps que usan sus servicios</a>.
+      </p>
 
-<p>
-    [Explica cuánto tiempo conservas los datos.]
-</p>
+      <h2>4. Firebase Crashlytics</h2>
+      <p>
+        La Aplicación utiliza <strong>Firebase Crashlytics</strong>, un servicio de Google, para detectar,
+        diagnosticar y corregir fallos y problemas de estabilidad.
+      </p>
+      <p>
+        Crashlytics puede recopilar y transmitir a Google información técnica relacionada con un fallo, como:
+      </p>
+      <ul>
+        <li>trazas de error y de pila;</li>
+        <li>estado relevante de la Aplicación en el momento del fallo;</li>
+        <li>modelo y características técnicas del dispositivo y del sistema operativo;</li>
+        <li>versión de la Aplicación y del SDK;</li>
+        <li>identificadores de instalación generados por Firebase;</li>
+        <li>información de sesión y rendimiento necesaria para diagnosticar la estabilidad.</li>
+      </ul>
+      <p>
+        No utilizamos Crashlytics con el propósito de identificar personalmente al usuario y no pretendemos
+        adjuntar a los informes de fallos nombres, correos electrónicos, coordenadas de ubicación, listas de
+        dispositivos Bluetooth detectados ni favoritos. Si esta configuración cambia en el futuro, esta
+        Política se actualizará antes de aplicar el nuevo tratamiento.
+      </p>
+      <p>
+        Más información sobre privacidad de Firebase:
+        <a href="https://firebase.google.com/support/privacy" rel="noopener noreferrer">Privacidad y seguridad en Firebase</a>.
+      </p>
 
-<h2>6. Derechos del usuario</h2>
+      <h2>5. Compras dentro de la aplicación y tiendas</h2>
+      <p>
+        La Aplicación ofrece una compra no consumible para eliminar anuncios. En Android, el pago se procesa
+        mediante <strong>Google Play Billing</strong>. Alejandro Sahonero no recibe ni almacena los datos
+        completos de tu tarjeta bancaria.
+      </p>
+      <p>
+        La Aplicación puede recibir de la tienda la información técnica necesaria para conocer el producto
+        adquirido, el estado de la compra y verificar o restaurar el derecho premium. Parte del estado del
+        derecho premium se conserva localmente en almacenamiento protegido del dispositivo.
+      </p>
+      <p>
+        Si en el futuro la Aplicación se distribuye en otra tienda, como Apple App Store, el procesamiento de
+        pagos y distribución también estará sujeto a las prácticas y políticas de privacidad de dicha tienda.
+      </p>
 
-<p>
-    Los usuarios pueden solicitar el acceso, modificación o eliminación
-    de sus datos personales contactando con nosotros.
-</p>
+      <h2>6. Reseñas en la tienda</h2>
+      <p>
+        La Aplicación puede utilizar la función oficial de reseñas dentro de la app de la tienda correspondiente.
+        Las reseñas que decidas enviar se gestionan por la tienda y quedan sujetas a sus propias condiciones y
+        políticas de privacidad. La Aplicación no almacena en un servidor propio el contenido de esas reseñas.
+      </p>
 
-<h2>7. Contacto</h2>
+      <h2>7. Contacto voluntario por correo</h2>
+      <p>
+        Si contactas con nosotros por correo electrónico, recibiremos la dirección desde la que escribas y la
+        información que incluyas voluntariamente en tu mensaje. Utilizaremos esos datos para responder a tu
+        consulta, atender solicitudes de privacidad, resolver incidencias o cumplir obligaciones legales.
+      </p>
+      <p>
+        Conservaremos estos mensajes solo durante el tiempo razonablemente necesario para gestionar la consulta,
+        mantener un registro cuando sea necesario por motivos legales o de seguridad y resolver posibles
+        reclamaciones. Puedes solicitar su eliminación cuando no exista una obligación legal que exija conservarlos.
+      </p>
 
-<p>
-    Email: contacto@ejemplo.com
-</p>
+      <h2>8. Datos que no recopilamos directamente</h2>
+      <p>La Aplicación no requiere que nos proporciones directamente:</p>
+      <ul>
+        <li>nombre o apellidos;</li>
+        <li>cuenta de usuario o contraseña;</li>
+        <li>dirección postal;</li>
+        <li>número de teléfono;</li>
+        <li>contactos, fotografías, cámara o micrófono;</li>
+        <li>historial de ubicación GPS;</li>
+        <li>datos bancarios completos.</li>
+      </ul>
+      <p>
+        Esta afirmación se refiere a la recopilación directa por parte de Alejandro Sahonero. Los SDKs y tiendas
+        de terceros pueden tratar los datos técnicos descritos en esta Política conforme a sus propias funciones
+        y políticas.
+      </p>
 
+      <h2>9. Compartición y venta de datos</h2>
+      <p>
+        No vendemos tus datos personales. No compartimos con un servidor propio los dispositivos Bluetooth
+        encontrados, su RSSI, tus favoritos ni tu ubicación precisa.
+      </p>
+      <p>
+        Los proveedores externos integrados en la Aplicación —principalmente Google para AdMob, UMP, Firebase
+        Crashlytics y Google Play— pueden recibir los datos descritos en esta Política para prestar sus servicios.
+        En determinadas jurisdicciones, algunos usos de datos para publicidad personalizada pueden considerarse
+        "compartición" o publicidad dirigida conforme a la legislación local. Las opciones de consentimiento y
+        privacidad disponibles en la Aplicación y en el sistema operativo permiten gestionar dichos usos cuando
+        corresponda.
+      </p>
+
+      <h2>10. Conservación y eliminación</h2>
+      <ul>
+        <li><strong>Favoritos y preferencias:</strong> permanecen localmente hasta que los elimines, borres los datos de la app o desinstales la Aplicación.</li>
+        <li><strong>Datos de escaneo Bluetooth:</strong> se utilizan durante el funcionamiento de la función y no se conservan en un servidor propio.</li>
+        <li><strong>Estado premium:</strong> puede conservarse localmente para recordar la compra y verificarse con la tienda.</li>
+        <li><strong>Crashlytics y publicidad:</strong> los periodos de conservación dependen de Google y de la configuración de sus servicios, de acuerdo con sus políticas aplicables.</li>
+        <li><strong>Correos de soporte o privacidad:</strong> se conservan únicamente durante el tiempo necesario para responder, resolver incidencias o cumplir obligaciones legales.</li>
+      </ul>
+      <p>
+        Como la Aplicación no utiliza cuentas ni mantiene una base de datos propia de usuarios, no existe una
+        cuenta remota que debas eliminar. Puedes eliminar los datos locales borrando favoritos, borrando los datos
+        de la Aplicación desde los ajustes del dispositivo o desinstalándola. Para consultas sobre otros datos que
+        podamos conservar, puedes escribir a
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>.
+      </p>
+
+      <h2>11. Seguridad</h2>
+      <p>
+        Aplicamos medidas razonables para reducir la exposición de datos. La información de favoritos y
+        preferencias se conserva en el almacenamiento privado de la Aplicación y no mantenemos una base de datos
+        remota con los dispositivos Bluetooth detectados. Los servicios de terceros utilizan sus propios
+        mecanismos de seguridad para los datos que procesan.
+      </p>
+      <p>
+        Ningún sistema puede garantizar seguridad absoluta. Si detectamos un incidente que requiera notificación
+        conforme a la legislación aplicable, actuaremos de acuerdo con dichas obligaciones.
+      </p>
+
+      <h2>12. Base jurídica para usuarios del EEE, Reino Unido y jurisdicciones similares</h2>
+      <p>Cuando el RGPD u otra normativa equivalente resulte aplicable, los tratamientos se apoyarán, según el caso, en:</p>
+      <ul>
+        <li>la necesidad de proporcionar la funcionalidad solicitada por el usuario;</li>
+        <li>tu consentimiento, especialmente cuando sea exigible para publicidad personalizada o tecnologías equivalentes;</li>
+        <li>nuestro interés legítimo en mantener la Aplicación segura, estable y libre de errores, siempre que dicho interés no prevalezca sobre tus derechos;</li>
+        <li>el cumplimiento de obligaciones legales.</li>
+      </ul>
+
+      <h2>13. Tus derechos y opciones de privacidad</h2>
+      <p>
+        Dependiendo de tu lugar de residencia, puedes tener derecho a solicitar acceso, rectificación, supresión,
+        limitación, portabilidad u oposición respecto de determinados datos personales, así como a retirar el
+        consentimiento cuando el tratamiento dependa de él.
+      </p>
+      <p>
+        Puedes ejercer estos derechos escribiendo a
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>.
+        Ten en cuenta que, debido a que no existe una cuenta de usuario ni una base de datos propia de usuarios,
+        en muchos casos no dispondremos de información que nos permita identificarte.
+      </p>
+      <p>
+        También puedes gestionar permisos de Bluetooth y ubicación desde los ajustes del dispositivo y, cuando
+        esté disponible, cambiar tus elecciones publicitarias desde las opciones de privacidad de la Aplicación
+        y los controles del sistema o de Google.
+      </p>
+      <p>
+        Si resides en España o en otro Estado del Espacio Económico Europeo, también tienes derecho a presentar
+        una reclamación ante la autoridad de protección de datos competente; en España, la Agencia Española de
+        Protección de Datos (AEPD).
+      </p>
+
+      <h2>14. Transferencias internacionales</h2>
+      <p>
+        Los servicios externos utilizados por la Aplicación pueden procesar información en países distintos al
+        de tu residencia. Dichos proveedores son responsables de aplicar los mecanismos de transferencia y
+        salvaguardas exigidos por la normativa que les resulte aplicable.
+      </p>
+
+      <h2>15. Menores</h2>
+      <p>
+        La Aplicación está destinada a un <strong>público general</strong> y no está diseñada ni comercializada
+        específicamente para niños. No dispone de cuentas, perfiles sociales, chat ni formularios destinados a
+        recopilar directamente información personal de menores.
+      </p>
+      <p>
+        Las funciones publicitarias están sujetas a los controles, consentimientos y restricciones de edad o
+        plataforma que resulten aplicables. Si en el futuro la Aplicación se dirige específicamente a menores o
+        cambia su audiencia objetivo, se revisarán tanto la configuración de publicidad como esta Política.
+      </p>
+
+      <h2>16. Cambios en esta Política</h2>
+      <p>
+        Podemos actualizar esta Política si cambian las funciones de la Aplicación, los SDKs utilizados, las
+        obligaciones legales o las prácticas de tratamiento. Cuando realicemos cambios materiales, actualizaremos
+        la fecha indicada al inicio y publicaremos la nueva versión en esta misma dirección.
+      </p>
+
+      <h2>17. Contacto</h2>
+      <p>
+        Para cualquier consulta relacionada con esta Política de privacidad:<br>
+        <strong>Alejandro Sahonero</strong><br>
+        España<br>
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>
+      </p>
+    </section>
+
+    <hr>
+
+    <section id="en" class="card" lang="en">
+      <h2>Privacy Policy — English</h2>
+
+      <p>
+        This Privacy Policy explains how <strong>Buscar Audífonos: Localizador</strong>
+        (the "App") handles information when you use its features. The App is operated by
+        <strong>Alejandro Sahonero</strong>, based in Spain.
+      </p>
+
+      <div class="notice">
+        <strong>Summary:</strong> the App does not require registration or a user account and does not
+        operate its own remote server to which detected Bluetooth devices are sent. Device scanning,
+        proximity calculations and favorites are handled locally on the device. Certain third-party
+        services, especially Google AdMob and Firebase Crashlytics, may process technical and device
+        information as explained below.
+      </div>
+
+      <div class="summary" aria-label="Privacy summary">
+        <div><strong>No accounts</strong>We do not ask for a name, password or user profile to use the App.</div>
+        <div><strong>Local Bluetooth</strong>Detected devices and their signal strength are not sent to a server operated by us.</div>
+        <div><strong>Location</strong>Location permission may be requested only to enable Bluetooth scanning when Android requires it.</div>
+        <div><strong>Google services</strong>AdMob/UMP, Google Play and Firebase Crashlytics may process certain technical data.</div>
+      </div>
+
+      <h2>1. Data controller and contact</h2>
+      <p>
+        <strong>Controller:</strong> Alejandro Sahonero<br>
+        <strong>Country:</strong> Spain<br>
+        <strong>Privacy contact:</strong>
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>
+      </p>
+      <p>
+        You may use this address for privacy questions or to exercise rights available to you under
+        applicable law.
+      </p>
+
+      <h2>2. Information processed by the core functionality</h2>
+
+      <h3>2.1 Bluetooth scanning</h3>
+      <p>
+        The App uses Bluetooth Low Energy (BLE) to discover nearby devices and help you locate compatible
+        headphones and other Bluetooth devices. During scanning, the App may locally process information
+        contained in Bluetooth advertisements made available by the operating system, such as:
+      </p>
+      <ul>
+        <li>the device identifier exposed by the operating system (for example a MAC address or UUID, depending on the platform);</li>
+        <li>the advertised device name, when available;</li>
+        <li>manufacturer, model, category or advertised Bluetooth services, when available;</li>
+        <li>received signal strength (RSSI), used to calculate an approximate proximity indication;</li>
+        <li>battery level or other characteristics advertised by the device, when available.</li>
+      </ul>
+      <p>
+        This information is used to display nearby devices, identify them in a useful way and estimate
+        <strong>relative proximity</strong>. The App does not claim to determine an exact geographic location
+        or exact physical distance from RSSI.
+      </p>
+      <p>
+        <strong>Bluetooth scan data is not sent to a server operated by Alejandro Sahonero.</strong>
+        Technical device identifiers are used internally to distinguish devices and support features such
+        as the radar and favorites, but are not normally displayed to the user.
+      </p>
+
+      <h3>2.2 Location permission</h3>
+      <p>
+        On certain Android versions, the operating system may require location permission in order to discover
+        nearby Bluetooth devices. When the App requests this permission, it is used
+        <strong>solely to enable Bluetooth scanning</strong>.
+      </p>
+      <p>
+        The App does not use this permission to obtain, store or build a history of your GPS coordinates,
+        does not perform background location tracking, and does not send your precise location to a server
+        operated by us. Third-party advertising may estimate a general location from data such as an IP address,
+        as described in the advertising section.
+      </p>
+
+      <h3>2.3 Favorites and local preferences</h3>
+      <p>
+        You may save devices as favorites so that they can be recognized during future scans. To do this,
+        the App stores locally in its private app storage the technical identifier needed to recognize the
+        device and descriptive fields such as its name, model, brand or category.
+      </p>
+      <p>
+        The App may also store preferences locally, such as theme settings, usage settings and the state needed
+        to remember whether the premium ad-removal purchase has been obtained. This information remains on the
+        device except when the app store must be contacted to verify a purchase.
+      </p>
+
+      <h2>3. Advertising: Google AdMob and consent management</h2>
+      <p>
+        The App uses <strong>Google AdMob / Google Mobile Ads SDK</strong> to display ads and
+        <strong>Google User Messaging Platform (UMP)</strong> to manage privacy choices and consent where
+        applicable.
+      </p>
+      <p>
+        Depending on configuration, consent, region and applicable rules, Google may process information such as:
+      </p>
+      <ul>
+        <li>IP address, which may be used to estimate a general location;</li>
+        <li>device or advertising identifiers, when available and permitted;</li>
+        <li>interactions with the App and ads, such as app launches, taps or video views;</li>
+        <li>advertising data, such as ads that have been shown;</li>
+        <li>diagnostic and performance information about the App or SDK.</li>
+      </ul>
+      <p>
+        This information may be used to provide advertising, including personalized advertising when the
+        required consent has been obtained, as well as measurement, analytics, frequency capping, security
+        and fraud prevention.
+      </p>
+      <p>
+        Where required by law, a consent mechanism will be presented before data is used for personalized
+        advertising. The App includes a privacy option from which, when applicable, you can review or change
+        your choices. Withdrawing consent does not affect the lawfulness of processing carried out before
+        withdrawal.
+      </p>
+      <p>
+        Non-personalized ads may still involve certain technical processing required for purposes such as
+        frequency capping, aggregated reporting, security or fraud prevention.
+      </p>
+      <p>
+        Learn more:
+        <a href="https://policies.google.com/privacy" rel="noopener noreferrer">Google Privacy Policy</a>
+        and
+        <a href="https://policies.google.com/technologies/partner-sites" rel="noopener noreferrer">how Google uses information from sites or apps that use its services</a>.
+      </p>
+
+      <h2>4. Firebase Crashlytics</h2>
+      <p>
+        The App uses <strong>Firebase Crashlytics</strong>, a Google service, to detect, diagnose and fix
+        crashes and stability problems.
+      </p>
+      <p>Crashlytics may collect and transmit to Google technical information related to a crash, such as:</p>
+      <ul>
+        <li>crash logs and stack traces;</li>
+        <li>relevant App state at the time of the crash;</li>
+        <li>device model and technical operating-system information;</li>
+        <li>App and SDK version;</li>
+        <li>installation identifiers generated by Firebase;</li>
+        <li>session and performance information needed to diagnose stability.</li>
+      </ul>
+      <p>
+        We do not use Crashlytics for the purpose of personally identifying users and we do not intend to
+        attach names, email addresses, precise location coordinates, lists of scanned Bluetooth devices or
+        favorites to crash reports. If this configuration changes in the future, this Policy will be updated
+        before the new processing is introduced.
+      </p>
+      <p>
+        Learn more about Firebase privacy:
+        <a href="https://firebase.google.com/support/privacy" rel="noopener noreferrer">Privacy and Security in Firebase</a>.
+      </p>
+
+      <h2>5. In-app purchases and app stores</h2>
+      <p>
+        The App offers a non-consumable purchase to remove ads. On Android, payment is processed through
+        <strong>Google Play Billing</strong>. Alejandro Sahonero does not receive or store your complete
+        payment-card details.
+      </p>
+      <p>
+        The App may receive the technical information needed to determine the purchased product, purchase
+        status and to verify or restore the premium entitlement. Part of the premium entitlement state is
+        stored locally in protected device storage.
+      </p>
+      <p>
+        If the App is distributed through another store in the future, such as the Apple App Store, payment
+        and distribution processing will also be subject to that store's own privacy practices and policies.
+      </p>
+
+      <h2>6. App store reviews</h2>
+      <p>
+        The App may use the official in-app review feature provided by the relevant app store. Any review you
+        choose to submit is handled by the store and is subject to its own terms and privacy policy. The App
+        does not store the content of those reviews on a server operated by us.
+      </p>
+
+      <h2>7. Voluntary email contact</h2>
+      <p>
+        If you contact us by email, we will receive the email address you use and any information you
+        voluntarily include in your message. We use this information to reply, handle privacy requests,
+        troubleshoot issues or comply with legal obligations.
+      </p>
+      <p>
+        We retain such messages only for as long as reasonably necessary to handle the request, keep records
+        where needed for legal or security reasons, and resolve potential disputes. You may request deletion
+        where there is no legal obligation requiring continued retention.
+      </p>
+
+      <h2>8. Information we do not directly collect</h2>
+      <p>The App does not require you to directly provide us with:</p>
+      <ul>
+        <li>your first or last name;</li>
+        <li>a user account or password;</li>
+        <li>a postal address;</li>
+        <li>a phone number;</li>
+        <li>contacts, photos, camera or microphone data;</li>
+        <li>a GPS location history;</li>
+        <li>full payment-card details.</li>
+      </ul>
+      <p>
+        This statement concerns direct collection by Alejandro Sahonero. Third-party SDKs and app stores may
+        process the technical information described in this Policy according to their own functions and policies.
+      </p>
+
+      <h2>9. Data sharing and sale</h2>
+      <p>
+        We do not sell your personal data. We do not send detected Bluetooth devices, their RSSI, your
+        favorites or your precise location to a server operated by us.
+      </p>
+      <p>
+        Third-party providers integrated into the App — primarily Google for AdMob, UMP, Firebase Crashlytics
+        and Google Play — may receive the information described in this Policy in order to provide their
+        services. In some jurisdictions, certain uses of data for personalized advertising may be considered
+        "sharing" or targeted advertising under local law. The consent and privacy controls available in the
+        App and operating system can be used to manage such uses where applicable.
+      </p>
+
+      <h2>10. Retention and deletion</h2>
+      <ul>
+        <li><strong>Favorites and preferences:</strong> remain locally until you delete them, clear the App's data or uninstall the App.</li>
+        <li><strong>Bluetooth scan data:</strong> is used while the feature operates and is not retained on a server operated by us.</li>
+        <li><strong>Premium status:</strong> may be stored locally to remember the purchase and verified with the app store.</li>
+        <li><strong>Crashlytics and advertising data:</strong> retention periods are determined by Google and the configuration of its services under their applicable policies.</li>
+        <li><strong>Support or privacy emails:</strong> are retained only as long as needed to reply, troubleshoot or meet legal obligations.</li>
+      </ul>
+      <p>
+        Because the App has no user accounts and we do not maintain our own user database, there is no remote
+        account that you need to delete. You can remove local data by deleting favorites, clearing the App's
+        storage in your device settings or uninstalling the App. For questions about other information that we
+        may hold, contact
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>.
+      </p>
+
+      <h2>11. Security</h2>
+      <p>
+        We use reasonable measures to reduce data exposure. Favorites and preferences are stored in the App's
+        private storage, and we do not maintain a remote database containing discovered Bluetooth devices.
+        Third-party services use their own security measures for the information they process.
+      </p>
+      <p>
+        No system can guarantee absolute security. If we become aware of an incident that requires notification
+        under applicable law, we will act in accordance with those obligations.
+      </p>
+
+      <h2>12. Legal bases for users in the EEA, United Kingdom and similar jurisdictions</h2>
+      <p>Where the GDPR or equivalent law applies, processing may rely, as appropriate, on:</p>
+      <ul>
+        <li>the need to provide functionality requested by the user;</li>
+        <li>your consent, especially where required for personalized advertising or equivalent technologies;</li>
+        <li>our legitimate interest in keeping the App secure, stable and free of errors, where that interest is not overridden by your rights;</li>
+        <li>compliance with legal obligations.</li>
+      </ul>
+
+      <h2>13. Your rights and privacy choices</h2>
+      <p>
+        Depending on where you live, you may have rights to request access, correction, deletion, restriction,
+        portability or objection in relation to certain personal data, and to withdraw consent where processing
+        is based on consent.
+      </p>
+      <p>
+        You can make such requests by emailing
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>.
+        Because the App does not use a user account or maintain its own user database, in many cases we will not
+        hold information that enables us to identify you.
+      </p>
+      <p>
+        You can also manage Bluetooth and location permissions in your device settings and, where available,
+        change advertising choices through the App's privacy options and the privacy controls provided by your
+        operating system or Google.
+      </p>
+      <p>
+        If you live in Spain or another EEA country, you also have the right to lodge a complaint with the
+        competent data protection authority; in Spain, this is the Spanish Data Protection Agency (AEPD).
+      </p>
+
+      <h2>14. International transfers</h2>
+      <p>
+        Third-party services used by the App may process information in countries other than the country where
+        you live. Those providers are responsible for applying the transfer mechanisms and safeguards required
+        by the laws applicable to them.
+      </p>
+
+      <h2>15. Children</h2>
+      <p>
+        The App is intended for a <strong>general audience</strong> and is not specifically designed or
+        marketed to children. It does not provide user accounts, social profiles, chat or forms intended to
+        directly collect children's personal information.
+      </p>
+      <p>
+        Advertising features remain subject to applicable platform age controls, consent requirements and legal
+        restrictions. If the App is specifically directed to children in the future or its intended audience
+        changes, both the advertising configuration and this Policy will be reviewed.
+      </p>
+
+      <h2>16. Changes to this Policy</h2>
+      <p>
+        We may update this Policy if App features, integrated SDKs, legal obligations or data-handling practices
+        change. When material changes are made, we will update the date shown at the top and publish the revised
+        version at this same address.
+      </p>
+
+      <h2>17. Contact</h2>
+      <p>
+        For questions regarding this Privacy Policy:<br>
+        <strong>Alejandro Sahonero</strong><br>
+        Spain<br>
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <p>© 2026 Alejandro Sahonero — Buscar Audífonos: Localizador</p>
+  </footer>
 </body>
 </html>

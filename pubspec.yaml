@@ -77,6 +77,21 @@ dependencies:
   # nada en el arranque: el plugin no hace trabajo hasta el primer launchUrl.
   url_launcher: ^6.3.2
 
+  # --- Observabilidad -----------------------------------------------------
+  # Crash reporting. Obligatorio desde la v1: sin él, un crash en un móvil que
+  # no tienes es invisible, y Android Vitals penaliza la visibilidad en Play a
+  # partir del 1,09 % de sesiones con fallo. Firebase Crashlytics es la única
+  # opción con plan gratuito ilimitado.
+  # Impacto: ~800 KB en el AAB (firebase-core + crashlytics, tras R8) y CERO en
+  # el arranque: `Firebase.initializeApp()` se llama después del primer frame
+  # (ver bootstrap.dart). El SDK nativo sí se instala solo al arrancar el
+  # proceso vía ContentProvider — es lo que le permite capturar un crash
+  # anterior a que Dart esté vivo.
+  # Se activa solo si existe android/app/google-services.json; sin ese archivo
+  # la app compila y funciona igual, simplemente no reporta.
+  firebase_core: ^4.13.0
+  firebase_crashlytics: ^5.2.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
