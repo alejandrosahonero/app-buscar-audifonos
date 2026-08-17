@@ -13,6 +13,8 @@ void main() {
 
     expect(service.adsEnabled, isFalse);
     expect(service.canShowBanner, isFalse);
+    expect(service.canShowInterstitial, isFalse);
+    expect(service.canShowRewarded, isFalse);
     expect(service.isRewardedReady, isFalse);
   });
 

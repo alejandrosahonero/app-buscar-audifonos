@@ -199,9 +199,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     switch (result) {
       case AdShowResult.shown:
         break;
-      // Ads are off for this user entirely (no consent, or the SDK has not
-      // finished starting up). There is no video for them to watch, so charging
-      // them one would just be a locked door: pin it.
+      // Ads are off for this build or this user: no consent, the SDK has not
+      // finished starting up, or the rewarded unit id is not configured at all.
+      // There is no video for them to watch, so charging them one would just be
+      // a locked door: pin it.
       case AdShowResult.disabled:
         await _grantFavorite(device);
       // Ads are on but the cache is cold. Never dead-end the user for that —

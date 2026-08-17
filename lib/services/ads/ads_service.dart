@@ -68,10 +68,22 @@ class AdsService {
   /// True when an ad may be requested at all.
   bool get adsEnabled => _initialized && _consent.canRequestAds && !isPremium();
 
-  /// Banners are additionally gated on having a configured unit id, so an
-  /// unfinished production configuration degrades to "no banner" instead of a
-  /// runtime error.
+  /// Every format is additionally gated on having a configured unit id, so an
+  /// unfinished production configuration degrades to "this format does not
+  /// exist" instead of a runtime error.
+  ///
+  /// The distinction matters to callers: a format with no unit id will *never*
+  /// load, so reporting it as [AdShowResult.notReady] — "try again later" —
+  /// would leave a feature that pays with a rewarded video permanently locked.
+  /// It is reported as [AdShowResult.disabled], the same as for a premium user,
+  /// which is what tells the caller to grant the reward for free.
   bool get canShowBanner => adsEnabled && AdConfig.bannerAdUnitId.isNotEmpty;
+
+  bool get canShowInterstitial =>
+      adsEnabled && AdConfig.interstitialAdUnitId.isNotEmpty;
+
+  bool get canShowRewarded =>
+      adsEnabled && AdConfig.rewardedAdUnitId.isNotEmpty;
 
   String get bannerAdUnitId => AdConfig.bannerAdUnitId;
 
@@ -123,7 +135,7 @@ class AdsService {
   /// Never call this on a screen transition the user did not trigger, and never
   /// right after opening the app.
   Future<AdShowResult> registerActionAndMaybeShowInterstitial() async {
-    if (!adsEnabled) return AdShowResult.disabled;
+    if (!canShowInterstitial) return AdShowResult.disabled;
 
     _actionsSinceInterstitial++;
     if (_actionsSinceInterstitial < AppConfig.interstitialEveryNActions) {
@@ -143,7 +155,7 @@ class AdsService {
   /// Shows a cached interstitial, ignoring the action counter but still
   /// honouring premium/consent gating.
   Future<AdShowResult> showInterstitial() async {
-    if (!adsEnabled) return AdShowResult.disabled;
+    if (!canShowInterstitial) return AdShowResult.disabled;
 
     if (_isExpired(_interstitialLoadedAt)) {
       _disposeInterstitial();
@@ -180,10 +192,7 @@ class AdsService {
   }
 
   void _loadInterstitial() {
-    if (!adsEnabled ||
-        _interstitialLoading ||
-        _interstitial != null ||
-        AdConfig.interstitialAdUnitId.isEmpty) {
+    if (!canShowInterstitial || _interstitialLoading || _interstitial != null) {
       return;
     }
 
@@ -233,7 +242,7 @@ class AdsService {
   Future<AdShowResult> showRewarded({
     required void Function(RewardItem reward) onRewardEarned,
   }) async {
-    if (!adsEnabled) return AdShowResult.disabled;
+    if (!canShowRewarded) return AdShowResult.disabled;
 
     if (_isExpired(_rewardedLoadedAt)) {
       _disposeRewarded();
@@ -276,10 +285,7 @@ class AdsService {
       _rewarded != null && !_isExpired(_rewardedLoadedAt);
 
   void _loadRewarded() {
-    if (!adsEnabled ||
-        _rewardedLoading ||
-        _rewarded != null ||
-        AdConfig.rewardedAdUnitId.isEmpty) {
+    if (!canShowRewarded || _rewardedLoading || _rewarded != null) {
       return;
     }
 
