@@ -6,9 +6,20 @@ import 'package:buscar_audifonos/core/config/app_config.dart';
 /// the production ones. [AppConfig.useProductionAds] decides which set is
 /// exposed, so a debug build can never request a production ad unit.
 ///
-/// The test App ID also has to be declared in
-/// `android/app/src/main/AndroidManifest.xml`; replace it there when you switch
-/// to production (see CLAUDE.md → "Pasar a producción").
+/// **The App ID is the exception, and it matters.** It lives in
+/// `android/app/src/main/AndroidManifest.xml`, which cannot switch on the build
+/// mode, so the production App ID is now baked into every build including
+/// debug. That is the configuration Google documents and it is safe *because*
+/// the unit ids above still switch: a debug build identifies the app with the
+/// real App ID but only ever requests test creatives, which earn nothing and
+/// count for nothing.
+///
+/// What is **not** safe is running a *release* build on your own phone and
+/// touching the ads: those are real requests against real units, and AdMob
+/// bans accounts for that. Put your device in [testDeviceIds] first.
+///
+/// [prodAppId] is duplicated here only so the value in the manifest has a
+/// findable counterpart in Dart; nothing reads it.
 abstract final class AdConfig {
   // --- Official Google test unit ids -------------------------------------
   // https://developers.google.com/admob/android/test-ads
@@ -18,12 +29,15 @@ abstract final class AdConfig {
       'ca-app-pub-3940256099942544/1033173712';
   static const String _testRewarded = 'ca-app-pub-3940256099942544/5224354917';
 
-  // --- Production unit ids (fill in from the AdMob console) ---------------
-  // Leave empty until the real units exist: an empty id disables the format
-  // instead of crashing.
-  static const String _prodBanner = '';
-  static const String _prodInterstitial = '';
-  static const String _prodRewarded = '';
+  // --- Production unit ids -------------------------------------------------
+  // Only ever requested from a release build ([AppConfig.useProductionAds]).
+  // An empty id would disable that format rather than crash, which is what
+  // kept the app working before these existed.
+  static const String prodAppId = 'ca-app-pub-4073049276319773~8873347767';
+  static const String _prodBanner = 'ca-app-pub-4073049276319773/7194947351';
+  static const String _prodInterstitial =
+      'ca-app-pub-4073049276319773/5680157884';
+  static const String _prodRewarded = 'ca-app-pub-4073049276319773/6055612731';
 
   static String get bannerAdUnitId =>
       AppConfig.useProductionAds ? _prodBanner : _testBanner;

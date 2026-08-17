@@ -307,16 +307,26 @@ y migrar los providers a `@riverpod`. Añadir entonces `custom_lint` al `analysi
 
 ### 3.2 AdMob (`google_mobile_ads`)
 
-**IDs.** `core/config/ad_config.dart` mantiene dos juegos: los **IDs oficiales de prueba de Google** y los de producción (vacíos hasta que existan). La selección es automática:
+**IDs.** `core/config/ad_config.dart` mantiene dos juegos: los **IDs oficiales de prueba de Google** y los de producción (ya rellenos). La selección es automática:
 
 ```dart
 AppConfig.useProductionAds  // == kReleaseMode
 ```
 
-Un ID vacío **desactiva** ese formato en vez de romper. **Nunca** usar IDs de producción en debug: es causa directa de baneo por tráfico inválido.
+Un ID vacío **desactiva** ese formato en vez de romper (`canShowBanner` /
+`canShowInterstitial` / `canShowRewarded`, que devuelven `disabled`, no
+`notReady`).
 
-El App ID de prueba también está declarado en `android/app/src/main/AndroidManifest.xml`
-(`ca-app-pub-3940256099942544~3347511713`).
+> ⚠️ **El App ID es la excepción y conviene entender por qué.** Vive en
+> `AndroidManifest.xml`, que **no** puede conmutar según el modo de build, así
+> que el de producción (`ca-app-pub-4073049276319773~8873347767`) va en **todos**
+> los builds, debug incluido. Es el montaje que documenta Google y es seguro
+> *porque* los unit id sí conmutan: un debug se identifica con la app real pero
+> solo pide creatividades de prueba.
+>
+> Lo que sí banea cuentas es un build **release** en el móvil del desarrollador
+> con anuncios reales en pantalla. Antes de hacer eso, meter el dispositivo en
+> `AdConfig.testDeviceIds` (el id sale en logcat en la primera petición).
 
 **`AdsService` (`services/ads/ads_service.dart`)** — punto único de entrada. Se llama `AdsService` porque así lo nombra la guía estándar; existe el alias `typedef AdService = AdsService` para quien busque ese nombre. Responsabilidades:
 

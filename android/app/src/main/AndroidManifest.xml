@@ -57,16 +57,21 @@
         android:enableOnBackInvokedCallback="true">
 
         <!-- ==============================================================
-             AdMob App ID — OFFICIAL GOOGLE TEST ID.
-             Replace it with the production App ID only when you ship. Unlike
-             the ad unit ids, this one lives in the manifest and cannot switch
-             on the build mode, so swapping it is a manual step on the release
-             checklist. Shipping a production App ID while still developing is
-             a direct cause of an AdMob ban for invalid traffic.
+             AdMob App ID — PRODUCTION. Mirrored in AdConfig.prodAppId.
+
+             Unlike the ad unit ids, this one cannot switch on the build mode,
+             so every build carries it, debug included. That is Google's own
+             documented setup and it is safe only because the *unit* ids do
+             switch (AppConfig.useProductionAds == kReleaseMode): a debug build
+             announces the real app but requests test creatives.
+
+             The thing that gets accounts banned is a RELEASE build on a
+             developer's phone with real ads on screen. Add that device to
+             AdConfig.testDeviceIds before running one.
              ============================================================== -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-4073049276319773~8873347767" />
 
         <!-- Delays ad SDK initialization until MobileAds.initialize() is
              called, so nothing competes with the first frame. -->
