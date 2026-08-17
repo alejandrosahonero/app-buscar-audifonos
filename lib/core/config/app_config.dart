@@ -18,6 +18,19 @@ abstract final class AppConfig {
   /// Shown in Settings. Keep in sync with `version:` in pubspec.yaml.
   static const String versionName = '1.0.0';
 
+  /// Public URL of the privacy policy.
+  ///
+  /// Google Play **requires** one for any app that uses AdMob, because the ads
+  /// SDK collects the advertising id. The same URL has to be entered in the
+  /// Play Console listing — this constant only drives the in-app link.
+  ///
+  /// Empty until the document is published, and an empty value **hides** the
+  /// Settings row rather than opening a broken link: the same "an unconfigured
+  /// value disables the feature" rule the ad unit ids follow.
+  static const String privacyPolicyUrl = '';
+
+  static bool get hasPrivacyPolicy => privacyPolicyUrl.isNotEmpty;
+
   // --- Ad pacing ----------------------------------------------------------
 
   /// Number of "value actions" between two interstitials.

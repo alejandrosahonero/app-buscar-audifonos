@@ -69,6 +69,13 @@ dependencies:
   # La versión la fija flutter_localizations del SDK de Flutter (pinning).
   intl: ^0.20.2
   cupertino_icons: ^1.0.8
+  # Abre la política de privacidad en el navegador. Play la exige por usar
+  # AdMob, así que la app necesita poder salir a una URL externa.
+  # Impacto: CERO. Ya venía dentro del árbol como dependencia transitiva de
+  # google_mobile_ads (el SDK de anuncios la usa para abrir el destino del
+  # clic); esto solo la declara como directa para poder importarla. No toca
+  # nada en el arranque: el plugin no hace trabajo hasta el primer launchUrl.
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

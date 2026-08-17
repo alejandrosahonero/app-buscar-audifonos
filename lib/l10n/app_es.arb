@@ -231,6 +231,11 @@
   "settingsRestorePurchases": "Restaurar compras",
   "settingsRestoreDone": "Compras restauradas",
   "settingsPrivacyOptions": "Opciones de privacidad",
+  "settingsPrivacyPolicy": "Política de privacidad",
+  "@settingsPrivacyPolicy": {
+    "description": "Abre la política de privacidad en el navegador. Distinta de «Opciones de privacidad», que es el formulario de consentimiento de anuncios."
+  },
+  "settingsPrivacyPolicyFailed": "No se ha podido abrir el navegador.",
   "settingsRateApp": "Valorar la aplicación",
   "settingsAbout": "Acerca de",
   "settingsVersion": "Versión {version}",

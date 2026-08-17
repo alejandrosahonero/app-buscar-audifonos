@@ -128,10 +128,18 @@
             android:value="2" />
     </application>
 
+    <!-- Package visibility, Android 11+ (API 30). Without a matching <intent>
+         here the system hides those apps from us and the launch silently
+         fails — it does NOT throw. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
+        </intent>
+        <!-- A browser, so url_launcher can open the privacy policy. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
     </queries>
 </manifest>
