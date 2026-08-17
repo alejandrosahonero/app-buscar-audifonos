@@ -27,7 +27,7 @@ abstract final class AppConfig {
   /// Empty until the document is published, and an empty value **hides** the
   /// Settings row rather than opening a broken link: the same "an unconfigured
   /// value disables the feature" rule the ad unit ids follow.
-  static const String privacyPolicyUrl = '';
+  static const String privacyPolicyUrl = 'https://alejandrosahonero.github.io/app-buscar-audifonos/privacy-policy.html';
 
   static bool get hasPrivacyPolicy => privacyPolicyUrl.isNotEmpty;
 
