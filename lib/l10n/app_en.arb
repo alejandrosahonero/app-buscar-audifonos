@@ -117,6 +117,8 @@
   "settingsRestorePurchases": "Restore purchases",
   "settingsRestoreDone": "Purchases restored",
   "settingsPrivacyOptions": "Privacy options",
+  "settingsPrivacyPolicy": "Privacy policy",
+  "settingsPrivacyPolicyFailed": "The browser could not be opened.",
   "settingsRateApp": "Rate this app",
   "settingsAbout": "About",
   "settingsVersion": "Version {version}",

@@ -10,6 +10,7 @@ import 'package:buscar_audifonos/services/review/review_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Settings screen.
 ///
@@ -96,6 +97,14 @@ class SettingsScreen extends ConsumerWidget {
             ),
           const Divider(),
           _SectionHeader(title: context.l10n.settingsAbout),
+          // Hidden until the policy is published — see AppConfig.
+          if (AppConfig.hasPrivacyPolicy)
+            ListTile(
+              leading: const Icon(Icons.shield_outlined),
+              title: Text(context.l10n.settingsPrivacyPolicy),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => _openPrivacyPolicy(context),
+            ),
           ListTile(
             leading: const Icon(Icons.star_outline),
             title: Text(context.l10n.settingsRateApp),
@@ -109,6 +118,25 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Opens the policy in the browser, outside the app.
+  ///
+  /// `externalApplication` on purpose: an in-app web view would make a legal
+  /// document look like part of the app, and the user cannot see the address
+  /// bar to check where it actually came from.
+  Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final Uri url = Uri.parse(AppConfig.privacyPolicyUrl);
+    final bool opened = await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+
+    // A phone with no browser is rare but real (kiosk builds, stripped ROMs).
+    // Say so instead of leaving the tap looking broken.
+    if (!opened && context.mounted) {
+      context.showSnack(context.l10n.settingsPrivacyPolicyFailed);
+    }
   }
 
   Future<void> _restore(BuildContext context, WidgetRef ref) async {
