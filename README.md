@@ -1,5 +1,11 @@
 # Buscar Audífonos: Localizador
 
+⚠️ PROPRIETARY SOFTWARE — ALL RIGHTS RESERVED
+
+This source code is publicly visible but is not open source.
+Copying, redistribution, modification, commercial use, or use
+in another application is not permitted without prior written authorization.
+
 Plantilla base (Base Starter Template) en Flutter para desarrollar y publicar aplicaciones Android en Google Play con rapidez.
 
 Trae preconfigurado lo que todas las apps repiten: monetización (AdMob + compra "quitar anuncios"), consentimiento GDPR, permisos de Android 12+, reseñas in-app, tema Material 3 claro/oscuro, navegación declarativa, localización es/en y el pipeline de release (ofuscación, R8, firma).
