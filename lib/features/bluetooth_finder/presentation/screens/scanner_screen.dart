@@ -8,8 +8,12 @@ import 'package:buscar_audifonos/core/widgets/empty_state.dart';
 import 'package:buscar_audifonos/core/widgets/permission_dialogs.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/domain/favorite_device.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/favorites_controller.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_tile.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/favorite_device_tile.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/scan_filter_bar.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
 import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
@@ -18,11 +22,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// The app's main screen: everything the phone can hear, strongest first.
+/// The app's main screen: everything the phone can hear, strongest first, with
+/// the user's pinned devices held above it.
 ///
 /// Built on [BaseScreen], so the anchored adaptive banner sits below the list
-/// (never over it) and disappears for premium users. A list screen is exactly
-/// the placement the project guide allows a banner on.
+/// and below the scan button (never over either) and disappears for premium
+/// users. A list screen is exactly the placement the project guide allows a
+/// banner on.
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
 
@@ -67,6 +73,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   Widget build(BuildContext context) {
     final bool isScanning = ref.watch(isScanningProvider).value ?? false;
     final List<DiscoveredDevice> visible = ref.watch(visibleDevicesProvider);
+    final List<DiscoveredDevice> unpinned = ref.watch(unpinnedDevicesProvider);
+    final List<FavoriteDevice> favorites = ref.watch(favoriteDevicesProvider);
     final int total = ref.watch(discoveredDevicesProvider).value?.length ?? 0;
 
     return BaseScreen(
@@ -78,14 +86,23 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           tooltip: context.l10n.settingsTitle,
         ),
       ],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _toggleScan(isScanning: isScanning),
-        icon: Icon(isScanning ? Icons.stop : Icons.bluetooth_searching),
-        label: Text(
-          isScanning
-              ? context.l10n.finderScanStop
-              : context.l10n.finderScanStart,
-        ),
+      // The hint travels with the button so the arrow cannot drift away from
+      // what it points at, whatever the screen height is.
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          if (!isScanning) const _ScanHint(),
+          FloatingActionButton.extended(
+            onPressed: () => _toggleScan(isScanning: isScanning),
+            icon: Icon(isScanning ? Icons.stop : Icons.bluetooth_searching),
+            label: Text(
+              isScanning
+                  ? context.l10n.finderScanStop
+                  : context.l10n.finderScanStart,
+            ),
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -93,12 +110,53 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           const _AdapterBanner(),
           ScanFilterBar(hiddenCount: total - visible.length),
           Expanded(
-            child: _DeviceList(devices: visible, isScanning: isScanning),
+            child: _ScannerList(
+              favorites: favorites,
+              devices: unpinned,
+              isScanning: isScanning,
+              onOpen: _openRadar,
+              onUnpin: _confirmUnpin,
+            ),
           ),
           if (!ref.watch(isPremiumProvider)) const _RemoveAdsEntryPoint(),
         ],
       ),
     );
+  }
+
+  void _openRadar(String deviceId) {
+    context.pushNamed(
+      AppRoutes.radarName,
+      pathParameters: <String, String>{AppRoutes.radarDeviceIdParam: deviceId},
+    );
+  }
+
+  /// Unpinning is free, but it costs a rewarded video to undo, so it always
+  /// asks first.
+  Future<void> _confirmUnpin(FavoriteDevice favorite) async {
+    final String name = deviceDisplayName(context, favorite.identity);
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.finderFavoriteRemoveTitle),
+        content: Text(dialogContext.l10n.finderFavoriteRemoveBody(name)),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(dialogContext.l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(dialogContext.l10n.commonRemove),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    await ref.read(favoriteDevicesProvider.notifier).remove(favorite.id);
+    if (!mounted) return;
+    context.showSnack(context.l10n.finderFavoriteRemoved);
   }
 
   Future<void> _toggleScan({required bool isScanning}) async {
@@ -130,6 +188,62 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     await service.start();
+  }
+}
+
+/// Points at the scan button while nothing is being scanned.
+///
+/// The empty state says the same thing in the middle of the screen, but a user
+/// who already has favourites pinned never sees it — the list is not empty. The
+/// call to action has to live next to the button it is about.
+class _ScanHint extends StatelessWidget {
+  const _ScanHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final Color background = context.colors.secondaryContainer;
+    final Color foreground = context.colors.onSecondaryContainer;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          ConstrainedBox(
+            // Without a ceiling the bubble would stretch to the full width of
+            // the screen and the arrow would stop lining up with the button.
+            constraints: const BoxConstraints(maxWidth: 240),
+            child: Material(
+              color: background,
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.md),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                child: Text(
+                  context.l10n.finderScanHint,
+                  textAlign: TextAlign.end,
+                  style: context.texts.bodySmall?.copyWith(color: foreground),
+                ),
+              ),
+            ),
+          ),
+          // Sits over the extended button's icon rather than its middle, which
+          // is where the eye expects the target of a downward arrow.
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.xl),
+            child: Icon(
+              Icons.arrow_downward,
+              size: 20,
+              color: context.colors.secondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -208,46 +322,111 @@ class _Notice extends StatelessWidget {
   }
 }
 
-class _DeviceList extends StatelessWidget {
-  const _DeviceList({required this.devices, required this.isScanning});
+/// Favourites on top, everything the scan can hear below them.
+///
+/// One scroll view rather than two stacked lists: the favourites section is
+/// usually two or three rows, and giving it a box of its own would either waste
+/// height when it is short or fight the main list for it when it is long.
+class _ScannerList extends StatelessWidget {
+  const _ScannerList({
+    required this.favorites,
+    required this.devices,
+    required this.isScanning,
+    required this.onOpen,
+    required this.onUnpin,
+  });
 
+  final List<FavoriteDevice> favorites;
   final List<DiscoveredDevice> devices;
   final bool isScanning;
+  final void Function(String deviceId) onOpen;
+  final void Function(FavoriteDevice favorite) onUnpin;
 
   @override
   Widget build(BuildContext context) {
-    if (devices.isEmpty) {
-      return EmptyState(
-        icon: isScanning ? Icons.radar : Icons.bluetooth_searching,
-        title: isScanning
-            ? context.l10n.finderScanningTitle
-            : context.l10n.finderEmptyTitle,
-        message: isScanning
-            ? context.l10n.finderScanningMessage
-            : context.l10n.finderEmptyMessage,
-      );
-    }
-
-    // `.builder`, never a `ListView(children: [...])`: a busy room easily
-    // produces a hundred advertisers.
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xxl + AppSpacing.lg),
-      itemCount: devices.length,
-      itemBuilder: (BuildContext context, int index) {
-        final DiscoveredDevice device = devices[index];
-        return DeviceTile(
-          // Keyed by id so the tiles follow their device as the list re-sorts
-          // by signal strength instead of animating through each other.
-          key: ValueKey<String>(device.id),
-          device: device,
-          onTap: () => context.pushNamed(
-            AppRoutes.radarName,
-            pathParameters: <String, String>{
-              AppRoutes.radarDeviceIdParam: device.id,
+    return CustomScrollView(
+      slivers: <Widget>[
+        if (favorites.isNotEmpty) ...<Widget>[
+          _SectionHeader(title: context.l10n.finderFavoritesTitle),
+          // `.builder`, never a fixed children list: this one is short, but the
+          // rule keeps applying as the user pins more devices.
+          SliverList.builder(
+            itemCount: favorites.length,
+            itemBuilder: (BuildContext context, int index) {
+              final FavoriteDevice favorite = favorites[index];
+              return FavoriteDeviceTile(
+                key: ValueKey<String>(favorite.id),
+                favorite: favorite,
+                onTap: () => onOpen(favorite.id),
+                onLongPress: () => onUnpin(favorite),
+              );
             },
           ),
-        );
-      },
+          const SliverToBoxAdapter(child: Divider(height: AppSpacing.lg)),
+          _SectionHeader(title: context.l10n.finderOtherDevicesTitle),
+        ],
+        if (devices.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: EmptyState(
+              icon: isScanning ? Icons.radar : Icons.bluetooth_searching,
+              title: isScanning
+                  ? context.l10n.finderScanningTitle
+                  : context.l10n.finderEmptyTitle,
+              message: isScanning
+                  ? context.l10n.finderScanningMessage
+                  : context.l10n.finderEmptyMessage,
+            ),
+          )
+        else
+          SliverPadding(
+            // Clears the floating button and its hint from the last row.
+            padding: const EdgeInsets.only(bottom: AppSpacing.xxl * 2),
+            // A busy room easily produces a hundred advertisers, so the rows
+            // are built lazily.
+            sliver: SliverList.builder(
+              itemCount: devices.length,
+              itemBuilder: (BuildContext context, int index) {
+                final DiscoveredDevice device = devices[index];
+                return DeviceTile(
+                  // Keyed by id so the tiles follow their device as the list
+                  // re-sorts by signal strength instead of animating through
+                  // each other.
+                  key: ValueKey<String>(device.id),
+                  identity: device.identity,
+                  device: device,
+                  onTap: () => onOpen(device.id),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.xs,
+        ),
+        child: Text(
+          title,
+          style: context.texts.labelLarge?.copyWith(
+            color: context.colors.primary,
+          ),
+        ),
+      ),
     );
   }
 }

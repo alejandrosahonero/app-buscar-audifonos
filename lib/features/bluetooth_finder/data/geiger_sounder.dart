@@ -6,14 +6,10 @@ import 'package:buscar_audifonos/features/bluetooth_finder/domain/proximity.dart
 
 /// Audible feedback for the radar, Geiger-counter style.
 ///
-/// Two modes, both driven by the same 0..1 closeness value:
-///
-/// * **Clicks** (free): a short burst whose repetition rate accelerates as the
-///   user gets closer. This is the mode that actually guides a search — the ear
-///   detects a change in rate far better than a change in volume.
-/// * **Continuous tone** (unlocked with a rewarded video): a looping tone whose
-///   volume tracks closeness, for hunting in a noisy room where individual
-///   clicks get lost.
+/// A short click whose repetition rate accelerates as the user gets closer.
+/// Rate, not volume: the ear detects a change in tempo far better than a change
+/// in loudness, and the whole point is to steer someone who is looking at the
+/// room rather than at the screen.
 ///
 /// No `BuildContext` and no Riverpod here: the screen owns the instance and
 /// feeds it, so the timing logic can be reasoned about (and disposed) on its
@@ -36,31 +32,28 @@ class GeigerSounder {
   ).build();
 
   final AudioPlayer _clickPlayer = AudioPlayer(playerId: 'radar_click');
-  final AudioPlayer _tonePlayer = AudioPlayer(playerId: 'radar_tone');
 
   /// Every call into `audioplayers` is asynchronous, so two transitions in
   /// flight at once get delivered in whatever order the platform answers —
-  /// which is how the "pause the tone" of one transition lands *after* the
-  /// "resume the tone" of the next and leaves the radar silent. All platform
-  /// work is appended here and runs in the order it was requested.
+  /// which is how the "stop" of one transition lands *after* the "resume" of
+  /// the next and leaves the radar silent. All platform work is appended here
+  /// and runs in the order it was requested.
   Future<void> _queue = Future<void>.value();
 
-  final List<StreamSubscription<AudioEvent>> _errorSubscriptions =
-      <StreamSubscription<AudioEvent>>[];
+  StreamSubscription<AudioEvent>? _errorSubscription;
 
   Timer? _clickTimer;
   Duration _clickInterval = Duration.zero;
   double _closeness = 0;
   bool _muted = true;
-  bool _continuous = false;
   bool _clickInFlight = false;
   bool _prepared = false;
   bool _disposed = false;
 
   bool get isMuted => _muted;
 
-  /// Loads both sources into their backends. Call it once, off the first frame
-  /// — the very first `play` on a cold player takes hundreds of milliseconds
+  /// Loads the source into its backend. Call it once, off the first frame — the
+  /// very first `play` on a cold player takes hundreds of milliseconds
   /// otherwise.
   Future<void> prepare() {
     if (_prepared || _disposed) return Future<void>.value();
@@ -77,12 +70,6 @@ class GeigerSounder {
       await _clickPlayer.setPlayerMode(PlayerMode.lowLatency);
       await _clickPlayer.setReleaseMode(ReleaseMode.stop);
       await _clickPlayer.setSource(AssetSource('audio/beep.wav'));
-
-      await _tonePlayer.setAudioContext(_mixingContext);
-      await _tonePlayer.setPlayerMode(PlayerMode.mediaPlayer);
-      await _tonePlayer.setReleaseMode(ReleaseMode.loop);
-      await _tonePlayer.setSource(AssetSource('audio/tone.wav'));
-      await _tonePlayer.setVolume(0);
     } on Object catch (error, stackTrace) {
       // Loading is the one step worth a real error entry: if it fails the
       // radar is mute for the whole session.
@@ -98,11 +85,7 @@ class GeigerSounder {
   /// Feeds the current closeness (0..1). Cheap: call it on every reading.
   void updateCloseness(double closeness) {
     _closeness = closeness.clamp(0.0, 1.0);
-    if (_continuous) {
-      _applyToneVolume();
-    } else {
-      _rescheduleClicks();
-    }
+    _rescheduleClicks();
   }
 
   set muted(bool value) {
@@ -111,28 +94,15 @@ class GeigerSounder {
     _restart();
   }
 
-  /// Switches between the click train and the rewarded continuous tone.
-  set continuous(bool value) {
-    if (_continuous == value) return;
-    _continuous = value;
-    _restart();
-  }
-
   void _restart() {
     _stopClicks();
-    unawaited(_enqueue(_pauseTone));
     if (_muted || _disposed) return;
-
-    if (_continuous) {
-      unawaited(_enqueue(_startTone));
-    } else {
-      _clickInterval = Duration.zero;
-      _rescheduleClicks();
-    }
+    _clickInterval = Duration.zero;
+    _rescheduleClicks();
   }
 
   void _rescheduleClicks() {
-    if (_muted || _continuous || _disposed) return;
+    if (_muted || _disposed) return;
 
     final Duration next = Proximity.clickInterval(_closeness);
     final Duration delta = next - _clickInterval;
@@ -150,7 +120,7 @@ class GeigerSounder {
     // At the fastest rate a tick can arrive while the previous one is still
     // talking to the platform. Skipping it keeps the stop/resume pair atomic;
     // one missing click in a train of eleven per second is inaudible.
-    if (_muted || _continuous || _disposed || _clickInFlight) return;
+    if (_muted || _disposed || _clickInFlight) return;
     _clickInFlight = true;
     unawaited(_enqueue(_fireClick).whenComplete(() => _clickInFlight = false));
   }
@@ -165,7 +135,7 @@ class GeigerSounder {
   /// future hangs until the plugin's 30 s seek timeout and the click never
   /// fires at all.
   Future<void> _fireClick() async {
-    if (_muted || _continuous || _disposed) return;
+    if (_muted || _disposed) return;
     await _clickPlayer.stop();
     await _clickPlayer.resume();
   }
@@ -175,27 +145,6 @@ class GeigerSounder {
     _clickTimer = null;
     _clickInterval = Duration.zero;
   }
-
-  Future<void> _startTone() async {
-    if (_muted || !_continuous || _disposed) return;
-    // Volume before resume, so the first pass of the loop is already audible.
-    await _tonePlayer.setVolume(_toneVolume);
-    await _tonePlayer.resume();
-  }
-
-  Future<void> _pauseTone() async {
-    await _tonePlayer.setVolume(0);
-    await _tonePlayer.pause();
-  }
-
-  void _applyToneVolume() {
-    if (_muted || !_continuous || _disposed) return;
-    unawaited(_enqueue(() => _tonePlayer.setVolume(_toneVolume)));
-  }
-
-  /// Never fully silent while the mode is on: the user paid a video for a sound
-  /// that is always there.
-  double get _toneVolume => 0.25 + _closeness * 0.75;
 
   /// Appends [action] to the serialized queue.
   ///
@@ -219,19 +168,15 @@ class GeigerSounder {
   /// an error on the event stream, not as a failed call. Without a listener it
   /// is dropped and the radar just goes quiet with no way to tell why.
   void _watchForPlatformErrors() {
-    for (final AudioPlayer player in <AudioPlayer>[_clickPlayer, _tonePlayer]) {
-      _errorSubscriptions.add(
-        player.eventStream.listen(
-          null,
-          onError: (Object error, StackTrace stackTrace) => AppLogger.error(
-            'Radar audio player ${player.playerId} reported an error',
-            name: 'radar',
-            error: error,
-            stackTrace: stackTrace,
-          ),
-        ),
-      );
-    }
+    _errorSubscription = _clickPlayer.eventStream.listen(
+      null,
+      onError: (Object error, StackTrace stackTrace) => AppLogger.error(
+        'Radar audio player ${_clickPlayer.playerId} reported an error',
+        name: 'radar',
+        error: error,
+        stackTrace: stackTrace,
+      ),
+    );
   }
 
   Future<void> dispose() async {
@@ -241,12 +186,8 @@ class GeigerSounder {
     // Let the queue drain first: disposing a player while a call of its own is
     // still in flight throws on the platform side.
     await _queue;
-    for (final StreamSubscription<AudioEvent> subscription
-        in _errorSubscriptions) {
-      await subscription.cancel();
-    }
-    _errorSubscriptions.clear();
+    await _errorSubscription?.cancel();
+    _errorSubscription = null;
     await _clickPlayer.dispose();
-    await _tonePlayer.dispose();
   }
 }

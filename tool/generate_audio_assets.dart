@@ -1,8 +1,8 @@
-/// Generates the WAV assets used by the Geiger-style locator sound.
+/// Generates the WAV asset used by the Geiger-style locator sound.
 ///
-/// The files are tiny, fully synthetic and deterministic, so they are generated
-/// from this script instead of being committed as opaque binaries nobody can
-/// audit or tweak. Regenerate them with:
+/// It is tiny, fully synthetic and deterministic, so it is generated from this
+/// script instead of being committed as an opaque binary nobody can audit or
+/// tweak. Regenerate it with:
 ///
 ///     dart run tool/generate_audio_assets.dart
 ///
@@ -24,14 +24,6 @@ void main() {
     'assets/audio/beep.wav',
     _renderClick(frequency: 1800, duration: const Duration(milliseconds: 70)),
   );
-
-  // Sustained tone for the rewarded "continuous beep" mode. An exact whole
-  // number of cycles is what makes the loop seamless: a partial cycle produces
-  // an audible click at every wrap.
-  _writeWav(
-    'assets/audio/tone.wav',
-    _renderLoopTone(frequency: 660, cycles: 330),
-  );
 }
 
 /// A decaying sine burst: fast linear attack (no start click) followed by an
@@ -51,18 +43,6 @@ Float64List _renderClick({
     final double attack = i < attackSamples ? i / attackSamples : 1;
     final double decay = math.exp(-t * 38);
     samples[i] = math.sin(2 * math.pi * frequency * t) * attack * decay * 0.85;
-  }
-
-  return samples;
-}
-
-/// A steady sine wave whose length is an exact multiple of its own period.
-Float64List _renderLoopTone({required double frequency, required int cycles}) {
-  final int sampleCount = (cycles * _sampleRate / frequency).round();
-  final Float64List samples = Float64List(sampleCount);
-
-  for (int i = 0; i < sampleCount; i++) {
-    samples[i] = math.sin(2 * math.pi * cycles * i / sampleCount) * 0.7;
   }
 
   return samples;

@@ -6,13 +6,15 @@ import 'package:buscar_audifonos/core/widgets/base_screen.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/geiger_sounder.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/domain/favorite_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/proximity.dart';
-import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/continuous_mode_controller.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/favorites_controller.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/radar_view.dart';
 import 'package:buscar_audifonos/services/ads/ads_providers.dart';
 import 'package:buscar_audifonos/services/ads/ads_service.dart';
+import 'package:buscar_audifonos/services/billing/premium_controller.dart';
 import 'package:buscar_audifonos/services/review/review_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,11 +55,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     super.initState();
 
     // `ref.listen` (below) only fires on *changes*, so seed from whatever the
-    // scan already knows about this device.
+    // scan already knows about this device — or, when it knows nothing because
+    // the device is a favourite that is out of range, from what was saved when
+    // the user pinned it.
     final DiscoveredDevice? current = ref.read(
       deviceByIdProvider(widget.deviceId),
     );
-    _lastKnownIdentity = current?.identity;
+    _lastKnownIdentity = current?.identity ?? _savedIdentity();
     _lastKnownPaired = current?.isPaired ?? false;
 
     // Off the first frame: loading the audio sources touches the platform.
@@ -93,7 +97,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     final DiscoveredDevice? device = ref.watch(
       deviceByIdProvider(widget.deviceId),
     );
-    final bool unlocked = ref.watch(continuousModeUnlockedProvider);
+    final bool isFavorite = ref.watch(isFavoriteProvider(widget.deviceId));
 
     final DeviceIdentity identity =
         _lastKnownIdentity ?? DeviceIdentity.unknown;
@@ -126,11 +130,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               const SizedBox(height: AppSpacing.md),
               _Controls(
                 soundOn: _soundOn,
-                continuousUnlocked: unlocked,
+                isFavorite: isFavorite,
+                // Pinning is only offered for a device the scan can actually
+                // hear: the saved description is taken from a live reading.
+                onFavoritePressed: isFavorite
+                    ? _removeFromFavorites
+                    : (device == null ? null : () => _addToFavorites(device)),
                 onToggleSound: _toggleSound,
-                onContinuousPressed: unlocked
-                    ? _enableContinuous
-                    : _unlockContinuous,
               ),
             ],
           ),
@@ -157,51 +163,99 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     _sounder.muted = !_soundOn;
   }
 
-  void _enableContinuous() {
-    setState(() => _soundOn = true);
-    _sounder
-      ..continuous = true
-      ..muted = false;
-    context.showSnack(context.l10n.radarContinuousEnabled);
+  /// The description saved the day this device was pinned, if it ever was.
+  ///
+  /// This is what keeps the title on a favourite that is switched off: there is
+  /// no advertisement left to resolve a name from.
+  DeviceIdentity? _savedIdentity() {
+    for (final FavoriteDevice favorite in ref.read(favoriteDevicesProvider)) {
+      if (favorite.id == widget.deviceId) return favorite.identity;
+    }
+    return null;
   }
 
   /// Rewarded flow, in the order the project guide mandates:
   /// explain → show → grant only from `onUserEarnedReward` → degrade politely
   /// when there is no inventory.
-  Future<void> _unlockContinuous() async {
+  Future<void> _addToFavorites(DiscoveredDevice device) async {
+    // Premium users bought their way out of ads, so there is no video to offer
+    // them and no dialog worth showing.
+    if (ref.read(isPremiumProvider)) {
+      await _grantFavorite(device);
+      return;
+    }
+
     final bool accepted = await _confirmRewarded();
     if (!accepted || !mounted) return;
 
     final AdShowResult result = await ref
         .read(adsServiceProvider)
-        .showRewarded(onRewardEarned: _grantContinuous);
+        .showRewarded(
+          onRewardEarned: (RewardItem _) => unawaited(_grantFavorite(device)),
+        );
 
     if (!mounted) return;
 
     switch (result) {
       case AdShowResult.shown:
         break;
-      // No inventory, or the SDK is not ready yet (premium users never get
-      // here — `continuousModeUnlockedProvider` already grants them the mode).
-      // Either way: inform, never dead-end.
+      // Ads are off for this user entirely (no consent, or the SDK has not
+      // finished starting up). There is no video for them to watch, so charging
+      // them one would just be a locked door: pin it.
       case AdShowResult.disabled:
+        await _grantFavorite(device);
+      // Ads are on but the cache is cold. Never dead-end the user for that —
+      // say so and let them try again.
       case AdShowResult.notReady:
       case AdShowResult.skipped:
         context.showSnack(context.l10n.rewardsAdUnavailable);
     }
   }
 
-  void _grantContinuous(RewardItem reward) {
-    ref.read(rewardedContinuousModeProvider.notifier).grant();
-    if (mounted) _enableContinuous();
+  Future<void> _grantFavorite(DiscoveredDevice device) async {
+    await ref.read(favoriteDevicesProvider.notifier).add(device);
+    if (!mounted) return;
+    context.showSnack(context.l10n.radarFavoriteAdded);
+  }
+
+  Future<void> _removeFromFavorites() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.finderFavoriteRemoveTitle),
+        content: Text(
+          dialogContext.l10n.finderFavoriteRemoveBody(
+            deviceDisplayName(
+              dialogContext,
+              _lastKnownIdentity ?? DeviceIdentity.unknown,
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(dialogContext.l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(dialogContext.l10n.commonRemove),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    await ref.read(favoriteDevicesProvider.notifier).remove(widget.deviceId);
+    if (!mounted) return;
+    context.showSnack(context.l10n.finderFavoriteRemoved);
   }
 
   Future<bool> _confirmRewarded() async {
     final bool? accepted = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(dialogContext.l10n.radarContinuousDialogTitle),
-        content: Text(dialogContext.l10n.radarContinuousDialogBody),
+        title: Text(dialogContext.l10n.radarFavoriteDialogTitle),
+        content: Text(dialogContext.l10n.radarFavoriteDialogBody),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -328,15 +382,18 @@ class _Readout extends StatelessWidget {
 class _Controls extends StatelessWidget {
   const _Controls({
     required this.soundOn,
-    required this.continuousUnlocked,
+    required this.isFavorite,
     required this.onToggleSound,
-    required this.onContinuousPressed,
+    required this.onFavoritePressed,
   });
 
   final bool soundOn;
-  final bool continuousUnlocked;
+  final bool isFavorite;
   final VoidCallback onToggleSound;
-  final VoidCallback onContinuousPressed;
+
+  /// `null` disables the button: a device that is not being heard cannot be
+  /// pinned, because there is no reading to save a description from.
+  final VoidCallback? onFavoritePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -352,14 +409,12 @@ class _Controls extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         OutlinedButton.icon(
-          onPressed: onContinuousPressed,
-          icon: Icon(
-            continuousUnlocked ? Icons.graphic_eq : Icons.play_circle_outline,
-          ),
+          onPressed: onFavoritePressed,
+          icon: Icon(isFavorite ? Icons.star : Icons.star_border),
           label: Text(
-            continuousUnlocked
-                ? context.l10n.radarContinuousMode
-                : context.l10n.radarContinuousLocked,
+            isFavorite
+                ? context.l10n.radarFavoriteRemove
+                : context.l10n.radarFavoriteAdd,
           ),
         ),
       ],

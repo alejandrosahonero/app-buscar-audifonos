@@ -8,6 +8,7 @@
 
   "commonCancel": "Cancelar",
   "commonContinue": "Continuar",
+  "commonRemove": "Quitar",
   "commonNotNow": "Ahora no",
   "commonRetry": "Reintentar",
   "commonClose": "Cerrar",
@@ -68,6 +69,26 @@
   "finderScanningMessage": "Mantén el móvil en la mano y muévete despacio por la habitación.",
   "finderEmptyTitle": "Ningún dispositivo a la vista",
   "finderEmptyMessage": "Pulsa Escanear para buscar audífonos y dispositivos Bluetooth cercanos.",
+  "finderScanHint": "Pulsa el botón Escanear para empezar a buscar",
+  "@finderScanHint": {
+    "description": "Aviso con flecha que señala el botón flotante mientras no se está escaneando"
+  },
+  "finderFavoritesTitle": "Favoritos",
+  "finderOtherDevicesTitle": "Otros dispositivos",
+  "finderFavoriteOffline": "Sin conexión",
+  "@finderFavoriteOffline": {
+    "description": "Chip de un favorito del que ahora mismo no se recibe señal"
+  },
+  "finderFavoriteRemoveTitle": "¿Quitar de favoritos?",
+  "finderFavoriteRemoveBody": "{name} dejará de aparecer en la parte superior de la lista. Para volver a añadirlo tendrás que ver otro anuncio.",
+  "@finderFavoriteRemoveBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "finderFavoriteRemoved": "Eliminado de favoritos.",
   "finderUnnamedDevice": "Dispositivo Bluetooth",
   "@finderUnnamedDevice": {
     "description": "Nombre de un dispositivo del que no sabemos ni la marca ni el tipo. También es la etiqueta de la categoría desconocida."
@@ -164,11 +185,11 @@
   "radarSignalLostMessage": "El dispositivo ha dejado de emitir. Vuelve a la última zona donde la señal era más fuerte.",
   "radarSoundOn": "Sonido activado",
   "radarSoundOff": "Sonido silenciado",
-  "radarContinuousMode": "Pitido continuo activado",
-  "radarContinuousLocked": "Desbloquear pitido continuo",
-  "radarContinuousDialogTitle": "¿Activar el pitido continuo?",
-  "radarContinuousDialogBody": "Verás un vídeo corto y desbloquearás el tono continuo durante el resto de la sesión. Es más fácil de seguir en sitios ruidosos.",
-  "radarContinuousEnabled": "Pitido continuo activado.",
+  "radarFavoriteAdd": "Añadir a favoritos",
+  "radarFavoriteRemove": "Quitar de favoritos",
+  "radarFavoriteDialogTitle": "¿Añadir a favoritos?",
+  "radarFavoriteDialogBody": "Para añadirlo a favoritos tendrás que ver un vídeo corto. Después aparecerá siempre en la parte superior de la pantalla principal, aunque esté apagado o fuera de alcance.",
+  "radarFavoriteAdded": "Añadido a favoritos.",
 
   "permissionsTitle": "Permisos",
   "permissionBluetooth": "Bluetooth",

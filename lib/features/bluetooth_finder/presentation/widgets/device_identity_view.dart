@@ -106,17 +106,24 @@ class DeviceAvatar extends StatelessWidget {
   const DeviceAvatar({
     required this.category,
     required this.band,
+    this.color,
     this.size = 44,
     super.key,
   });
 
   final DeviceCategory category;
   final ProximityBand band;
+
+  /// Overrides the proximity tint. Set it only when there is no proximity to
+  /// show — a favourite that is out of range — so the badge does not claim a
+  /// reading the app does not have.
+  final Color? color;
+
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final Color color = proximityColor(context, band);
+    final Color color = this.color ?? proximityColor(context, band);
 
     return Container(
       width: size,
@@ -172,13 +179,13 @@ class DeviceMetaChips extends StatelessWidget {
 
     return <Widget>[
       if (battery != null)
-        _MetaChip(
+        DeviceMetaChip(
           icon: Icons.battery_full,
           label: context.l10n.finderMetaBattery(battery),
           highlighted: true,
         ),
       if (isPaired)
-        _MetaChip(
+        DeviceMetaChip(
           icon: Icons.link,
           label: context.l10n.finderMetaPaired,
           highlighted: true,
@@ -187,34 +194,40 @@ class DeviceMetaChips extends StatelessWidget {
       // the category — the line above the chips has just said it.
       if (traits.contains(DeviceTrait.hearingAid) &&
           identity.category != DeviceCategory.hearingAid)
-        _MetaChip(
+        DeviceMetaChip(
           icon: Icons.hearing,
           label: context.l10n.finderCategoryHearingAid,
         ),
       if (traits.contains(DeviceTrait.findMy))
-        _MetaChip(
+        DeviceMetaChip(
           icon: Icons.location_searching,
           label: context.l10n.finderTraitFindMy,
         ),
       if (traits.contains(DeviceTrait.leAudio))
-        _MetaChip(
+        DeviceMetaChip(
           icon: Icons.graphic_eq,
           label: context.l10n.finderTraitLeAudio,
         ),
       if (traits.contains(DeviceTrait.fastPair))
-        _MetaChip(icon: Icons.bolt, label: context.l10n.finderTraitFastPair),
+        DeviceMetaChip(
+          icon: Icons.bolt,
+          label: context.l10n.finderTraitFastPair,
+        ),
       if (traits.contains(DeviceTrait.swiftPair))
-        _MetaChip(icon: Icons.bolt, label: context.l10n.finderTraitSwiftPair),
+        DeviceMetaChip(
+          icon: Icons.bolt,
+          label: context.l10n.finderTraitSwiftPair,
+        ),
       if (traits.contains(DeviceTrait.beacon) &&
           identity.category != DeviceCategory.beacon)
-        _MetaChip(
+        DeviceMetaChip(
           icon: Icons.cell_tower,
           label: context.l10n.finderCategoryBeacon,
         ),
       // Weakest of the lot: true for most devices. It only earns a slot when
       // nothing more interesting filled the row.
       if (identity.connectable && !isPaired)
-        _MetaChip(
+        DeviceMetaChip(
           icon: Icons.bluetooth,
           label: context.l10n.finderMetaPairable,
         ),
@@ -222,13 +235,16 @@ class DeviceMetaChips extends StatelessWidget {
   }
 }
 
+/// One compact fact about a device.
+///
 /// Deliberately not a Material `Chip`: those carry a 32 dp minimum height and
 /// their own margins, which is half a list row for two words of text.
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({
+class DeviceMetaChip extends StatelessWidget {
+  const DeviceMetaChip({
     required this.icon,
     required this.label,
     this.highlighted = false,
+    super.key,
   });
 
   final IconData icon;

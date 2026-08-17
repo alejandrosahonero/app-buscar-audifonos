@@ -6,10 +6,15 @@ import 'package:flutter/material.dart';
 /// Every screen should be built on top of this instead of a bare [Scaffold] so
 /// the banner placement policy lives in exactly one place.
 ///
-/// The banner is laid out **below** the content inside a [Column], never
-/// stacked on top of it. Content therefore shrinks by the banner height instead
-/// of being covered, which is what keeps accidental clicks — and AdMob
-/// suspensions — away.
+/// The banner is laid out **below** the content, never stacked on top of it.
+/// Content therefore shrinks by the banner height instead of being covered,
+/// which is what keeps accidental clicks — and AdMob suspensions — away.
+///
+/// It travels in `bottomNavigationBar` rather than in a [Column] under the body
+/// for one specific reason: a [FloatingActionButton] is positioned from the
+/// scaffold's own geometry, which only accounts for the bottom bar. With the
+/// banner inside the body the FAB floated *over* it — hiding the ad behind the
+/// button and putting the button one thumb-slip away from an accidental click.
 ///
 /// Set `showBanner: false` on screens with dense controls, forms, onboarding,
 /// or any destructive action near the bottom edge. The project guide only
@@ -51,16 +56,22 @@ class BaseScreen extends StatelessWidget {
       floatingActionButton: floatingActionButton,
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: Padding(padding: padding, child: body),
-            ),
-            if (showBanner) const AdaptiveBannerAd(),
-          ],
-        ),
+        child: Padding(padding: padding, child: body),
       ),
-      bottomNavigationBar: bottomBar,
+      bottomNavigationBar: _bottom(),
+    );
+  }
+
+  /// Banner first, navigation bar under it. Returns `null` when there is
+  /// neither, so the scaffold reserves no space at all.
+  Widget? _bottom() {
+    final Widget? bar = bottomBar;
+    if (!showBanner) return bar;
+    if (bar == null) return const AdaptiveBannerAd();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[const AdaptiveBannerAd(), bar],
     );
   }
 }

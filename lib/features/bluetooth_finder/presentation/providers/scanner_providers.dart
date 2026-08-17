@@ -1,6 +1,7 @@
 import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/scan_filter.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/favorites_controller.dart';
 import 'package:buscar_audifonos/services/storage/storage_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // `ProviderFamily` is not part of the main Riverpod 3 barrel — family *types*
@@ -41,6 +42,22 @@ final Provider<List<DiscoveredDevice>> visibleDevicesProvider =
           ref.watch(discoveredDevicesProvider).value ??
           const <DiscoveredDevice>[];
       return ref.watch(scanFilterProvider).apply(devices);
+    });
+
+/// [visibleDevicesProvider] minus the devices already pinned to the top of the
+/// screen, so a favourite is never listed twice.
+///
+/// The favourites section is built from the stored list rather than from this
+/// one, which is what lets it show a device the filters would have dropped —
+/// or one that is not advertising at all.
+final Provider<List<DiscoveredDevice>> unpinnedDevicesProvider =
+    Provider<List<DiscoveredDevice>>((Ref ref) {
+      final List<DiscoveredDevice> visible = ref.watch(visibleDevicesProvider);
+      final Set<String> pinned = ref.watch(favoriteDeviceIdsProvider);
+      if (pinned.isEmpty) return visible;
+      return visible
+          .where((DiscoveredDevice device) => !pinned.contains(device.id))
+          .toList();
     });
 
 /// A single device by id, straight from the live stream.

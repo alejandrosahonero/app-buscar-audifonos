@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:buscar_audifonos/app.dart';
+import 'package:buscar_audifonos/core/widgets/adaptive_banner_ad.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/domain/favorite_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
 import 'package:buscar_audifonos/services/billing/premium_state.dart';
@@ -76,17 +79,30 @@ DiscoveredDevice _device({
   lastSeen: DateTime(2026),
 );
 
+/// Builds the stored form of the favourites list, exactly as
+/// `FavoriteDevicesController` writes it.
+String _storedFavorites(List<({String id, String name})> favorites) {
+  return jsonEncode(<Map<String, Object?>>[
+    for (final ({String id, String name}) favorite in favorites)
+      FavoriteDevice(
+        id: favorite.id,
+        identity: DeviceIdentity(advertisedName: favorite.name),
+      ).toJson(),
+  ]);
+}
+
 Future<void> _pumpApp(
   WidgetTester tester, {
   required BluetoothScanService scanService,
+  Map<String, Object> preferences = const <String, Object>{},
 }) async {
-  SharedPreferences.setMockInitialValues(<String, Object>{});
-  final SharedPreferences preferences = await SharedPreferences.getInstance();
+  SharedPreferences.setMockInitialValues(preferences);
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
 
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        sharedPreferencesProvider.overrideWithValue(preferences),
+        sharedPreferencesProvider.overrideWithValue(prefs),
         premiumControllerProvider.overrideWith(_FakePremiumController.new),
         bluetoothScanServiceProvider.overrideWithValue(scanService),
       ],
@@ -145,5 +161,98 @@ void main() {
     expect(find.text('Unnamed device'), findsNothing);
     expect(find.text('Way too far'), findsNothing);
     expect(find.text('2 hidden'), findsOneWidget);
+  });
+
+  testWidgets('the scan hint points at the button only while idle', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(tester, scanService: _FakeScanService());
+
+    expect(find.text('Tap the Scan button to start looking'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+  });
+
+  testWidgets('the scan hint disappears once a scan is running', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(tester, scanService: _FakeScanService()..scanning = true);
+
+    expect(find.text('Tap the Scan button to start looking'), findsNothing);
+    expect(find.byIcon(Icons.arrow_downward), findsNothing);
+  });
+
+  testWidgets('the scan button is laid out clear of the banner slot', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(tester, scanService: _FakeScanService());
+
+    // The banner travels in the scaffold's bottom bar, not in the body: that is
+    // what makes the scaffold position the floating button above it instead of
+    // on top of it.
+    final Scaffold scaffold = tester.widget<Scaffold>(
+      find.byType(Scaffold).first,
+    );
+    expect(scaffold.bottomNavigationBar, isA<AdaptiveBannerAd>());
+    expect(
+      find.descendant(
+        of: find.byType(CustomScrollView),
+        matching: find.byType(AdaptiveBannerAd),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('a favourite that is out of range is still listed, as offline', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      scanService: _FakeScanService(
+        seen: <DiscoveredDevice>[
+          _device(id: 'AA:BB:CC:DD:EE:01', name: 'Some speaker', rssi: -50),
+        ],
+      ),
+      preferences: <String, Object>{
+        'finder_favorite_devices': _storedFavorites(
+          <({String id, String name})>[
+            (id: 'AA:BB:CC:DD:EE:09', name: 'Lost buds'),
+          ],
+        ),
+      },
+    );
+
+    expect(find.text('Favourites'), findsOneWidget);
+    expect(find.text('Other devices'), findsOneWidget);
+    expect(find.text('Lost buds'), findsOneWidget);
+    expect(find.text('No signal'), findsOneWidget);
+  });
+
+  testWidgets('a favourite that is in range is pinned on top, and only once', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      scanService: _FakeScanService(
+        seen: <DiscoveredDevice>[
+          // Stronger signal, yet it must still sort below the favourite.
+          _device(id: 'AA:BB:CC:DD:EE:01', name: 'Near speaker', rssi: -40),
+          _device(id: 'AA:BB:CC:DD:EE:09', name: 'My buds', rssi: -70),
+        ],
+      ),
+      preferences: <String, Object>{
+        'finder_favorite_devices': _storedFavorites(
+          <({String id, String name})>[
+            (id: 'AA:BB:CC:DD:EE:09', name: 'My buds'),
+          ],
+        ),
+      },
+    );
+
+    final Iterable<String> titles = tester
+        .widgetList<ListTile>(find.byType(ListTile))
+        .map((ListTile tile) => (tile.title! as Text).data!);
+
+    expect(titles, <String>['My buds', 'Near speaker']);
+    expect(find.text('No signal'), findsNothing);
   });
 }

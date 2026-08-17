@@ -54,7 +54,7 @@ dependencies:
   flutter_blue_plus: 1.36.8
   # Sonido tipo contador Geiger del radar. Usa SoundPool en Android
   # (PlayerMode.lowLatency), única forma de repetir un clic cada 90 ms sin
-  # latencia audible. Los assets WAV son sintéticos (~50 KB, ver
+  # latencia audible. El asset WAV es sintético (~6 KB, ver
   # tool/generate_audio_assets.dart).
   audioplayers: ^6.8.1
 
@@ -80,7 +80,7 @@ flutter:
   # Activa la generación de AppLocalizations a partir de lib/l10n/*.arb.
   generate: true
   assets:
-    # Clic y tono del radar. Generados, no grabados:
+    # Clic del radar. Generado, no grabado:
     #   dart run tool/generate_audio_assets.dart
     - assets/audio/
   #   - assets/images/     # WebP para bitmaps, SVG para iconografía.

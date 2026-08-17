@@ -46,7 +46,8 @@ lib/
 │   │   ├── data/             # BluetoothScanService, GeigerSounder,
 │   │   │                     # advertisement_mapper (plugin → dominio)
 │   │   ├── domain/           # DiscoveredDevice, Proximity, ScanFilter,
-│   │   │                     # DeviceIdentity + BluetoothRegistry (ver §1.2)
+│   │   │                     # DeviceIdentity + BluetoothRegistry (ver §1.2),
+│   │   │                     # FavoriteDevice (ver §1.3)
 │   │   └── presentation/     # ScannerScreen (home), RadarScreen, providers
 │   ├── home/presentation/    # feature de ejemplo de la plantilla (HUÉRFANA:
 │   │                         # ya no está enrutada, ver §1.1)
@@ -83,7 +84,7 @@ demo y puede borrarse. Sus integraciones (interstitial tras acción de valor y
 
 | Ruta | Pantalla |
 |---|---|
-| `/` | `ScannerScreen` — lista de dispositivos, FAB Escanear/Detener, banner |
+| `/` | `ScannerScreen` — favoritos + lista de dispositivos, FAB Escanear/Detener, banner |
 | `/radar/:deviceId` | `RadarScreen` — radar animado + sonido Geiger |
 
 `AppRoutes.radarDeviceIdParam` es el id (MAC en Android, UUID en iOS). El radar
@@ -177,17 +178,19 @@ resueltas en un solo sitio (`proximityColor` en `signal_strength_icon.dart`).
 
 ### Sonido Geiger (`data/geiger_sounder.dart`)
 
-`audioplayers` con dos assets WAV **sintéticos** generados por script
+`audioplayers` con un asset WAV **sintético** generado por script
 (`dart run tool/generate_audio_assets.dart`) — no hay binarios opacos en el repo.
 
-- **Clics** (gratis): intervalo de 1100 ms a 90 ms según cercanía, en curva
-  (el oído resuelve mejor los cambios en un tren rápido). `PlayerMode.lowLatency`
-  → SoundPool en Android, imprescindible para repetir cada 90 ms.
-- **Tono continuo** (`radarContinuousLocked`): se desbloquea con **vídeo
-  recompensado** y dura **solo la sesión**. `rewardedContinuousModeProvider` **no
-  se persiste** a propósito: si sobreviviera al reinicio, el rewarded se
-  convertiría en una compra única. Premium lo tiene incluido
-  (`continuousModeUnlockedProvider`).
+- **Clics**: intervalo de 1100 ms a 90 ms según cercanía, en curva (el oído
+  resuelve mejor los cambios en un tren rápido que un cambio de volumen).
+  `PlayerMode.lowLatency` → SoundPool en Android, imprescindible para repetir
+  cada 90 ms.
+
+> El **tono continuo** de rewarded se eliminó: el vídeo recompensado paga ahora
+> el alta de un favorito (§1.3), que es una recompensa que el usuario entiende
+> sin explicación y que le sigue sirviendo mañana. Con él se fueron
+> `assets/audio/tone.wav`, el segundo `AudioPlayer` y
+> `continuous_mode_controller.dart`.
 
 > ⚠️ **Dos trampas de `audioplayers` que dejan el radar mudo sin dar ningún error:**
 >
@@ -208,13 +211,55 @@ resueltas en un solo sitio (`proximityColor` en `signal_strength_icon.dart`).
 
 - **Banner:** `ScannerScreen` usa `BaseScreen` con `showBanner: true` (pantalla de
   lista → placement permitido). `RadarScreen` lleva `showBanner: false`.
-- **Rewarded:** desbloqueo del tono continuo. La recompensa se concede **solo**
+- **Rewarded:** alta de un favorito (§1.3). La recompensa se concede **solo**
   dentro de `onUserEarnedReward`.
 - **Interstitial:** al salir del radar con la flecha de la AppBar (transición
   natural). El back del sistema **no** lo dispara, para no romper la animación de
   *predictive back*.
 - **Reseña:** al alcanzar la banda `veryNear` — el usuario acaba de encontrar lo
   que había perdido. Una vez por pantalla, nunca tras un error.
+
+---
+
+## 1.3 Favoritos
+
+Dispositivos que el usuario ancla arriba del todo de la lista. El caso de uso es
+el del auricular **apagado o fuera de alcance**: el que hay que encontrar es
+justo el que no se oye, así que un favorito **se pinta siempre**, con un chip
+`Sin conexión` cuando no hay lectura.
+
+| Archivo | Qué hace |
+|---|---|
+| `domain/favorite_device.dart` | El modelo y su (de)serialización a JSON |
+| `presentation/providers/favorites_controller.dart` | Lista persistida + `isFavoriteProvider` |
+| `presentation/widgets/favorite_device_tile.dart` | Fila que se suscribe al stream por id |
+| `presentation/widgets/device_tile.dart` | Fila común: acepta `device: null` = fuera de alcance |
+
+Decisiones que conviene no deshacer:
+
+- **Alta con vídeo recompensado, baja gratis.** El diálogo lo avisa antes de
+  lanzar el anuncio y la recompensa se concede **solo** en `onUserEarnedReward`.
+  Premium se salta el vídeo (pagó por no ver anuncios) y `AdShowResult.disabled`
+  también concede: si los anuncios están apagados para ese usuario, cobrarle uno
+  sería una puerta cerrada. `notReady` **no** concede — hay inventario, solo está
+  frío — y muestra el snackbar de siempre.
+- **El favorito guarda su propia descripción,** no solo el id: sin anuncio no hay
+  identidad que resolver y la fila quedaría como «Dispositivo Bluetooth». Se
+  guarda solo la mitad estable de `DeviceIdentity` (nombre, modelo, marca,
+  categoría); batería, rasgos y `connectable` describen **ese** paquete, y un
+  «80 %» junto a un dispositivo que nadie oye sería mentira.
+- **La lectura viva gana campo a campo** (`favorite.identity.mergedWith(live)`),
+  no en bloque: los primeros paquetes de un escaneo nuevo llegan anónimos y la
+  fila parpadearía al nombre genérico.
+- **La categoría se serializa por `name`, nunca por índice.** La taxonomía va a
+  crecer y un índice reetiquetaría en silencio todo lo guardado.
+- **Un favorito no aparece dos veces:** `unpinnedDevicesProvider` lo quita de la
+  lista de abajo. Y la sección de favoritos se construye desde el almacén, no
+  desde `visibleDevicesProvider`, que es lo que le permite enseñar un dispositivo
+  que los filtros habrían descartado.
+- **El id (MAC/UUID) sigue sin pintarse en ninguna pantalla.** Se persiste en
+  `shared_preferences` (almacenamiento privado de la app) porque es la única
+  forma de reconocer el dispositivo en el siguiente escaneo.
 
 ---
 
@@ -300,7 +345,15 @@ No añadir atajos que salten el pacing.
 `requestConsentInfoUpdate` → `loadAndShowConsentFormIfRequired` → `canRequestAds()`.
 En Ajustes hay una fila **"Opciones de privacidad"** que reabre el formulario, visible solo cuando `getPrivacyOptionsRequirementStatus() == required`.
 
-**Banner.** `AdaptiveBannerAd` (anchored adaptive, no 320x50 fijo) se coloca desde `BaseScreen` **debajo** del contenido dentro de un `Column`, nunca superpuesto. Si no hay anuncio o el usuario es premium ocupa **cero** altura.
+**Banner.** `AdaptiveBannerAd` (anchored adaptive, no 320x50 fijo) se coloca desde `BaseScreen` **debajo** del contenido, nunca superpuesto. Si no hay anuncio o el usuario es premium ocupa **cero** altura.
+
+> ⚠️ **El banner viaja en `bottomNavigationBar`, no en un `Column` bajo el body.**
+> El `FloatingActionButton` se posiciona a partir de la geometría del `Scaffold`,
+> y esa geometría **solo** descuenta la barra inferior. Con el banner dentro del
+> body, el FAB flotaba **encima** del anuncio: escondía el botón de Escanear y
+> dejaba el dedo a un resbalón de un clic accidental — que es exactamente lo que
+> suspende cuentas de AdMob. Si algún día hay `bottomBar`, va debajo del banner
+> dentro del mismo slot.
 Poner `showBanner: false` en pantallas con controles densos, formularios, onboarding o acciones destructivas cerca del borde inferior (así están `SettingsScreen` y `PaywallScreen`).
 
 **Mediación:** no activarla en el lanzamiento. A partir de ~10k usuarios activos, 2–3 redes.
