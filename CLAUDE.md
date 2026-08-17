@@ -404,6 +404,43 @@ Para el botón explícito "Valorar la aplicación" de Ajustes se usa `openStoreL
 
 ---
 
+## 5.1 Crash reporting (Firebase Crashlytics)
+
+`services/crash/crash_reporter.dart`. **Se engancha en `AppLogger.error`,** no se
+llama desde las features: ninguna feature importa Firebase, y cambiar de
+proveedor toca este archivo y `bootstrap.dart` y nada más.
+
+| Decisión | Por qué |
+|---|---|
+| `AppLogger` habla con un `CrashSink` (callback), no con Firebase | `core/utils/` lo alcanza lógica pura sin plataforma detrás; un import de Firebase ahí rompería los tests |
+| **`fatal: true` solo en los tres handlers globales** de `bootstrap.dart` | Un `try/catch` que degradó una función **no** es un crash. Contarlo como tal hunde el *crash-free rate* que Play mira en Android Vitals |
+| `Firebase.initializeApp()` va **después** del primer frame | Presupuesto de arranque (§8). No es un agujero: el SDK nativo se instala solo por ContentProvider al arrancar el proceso, así que un crash nativo/JVM previo sí se captura |
+| Colección **apagada en debug** (`!kDebugMode`) | Tus propios crashes de desarrollo ensucian el panel y falsean la métrica |
+| El plugin de Gradle se aplica **solo si existe `android/app/google-services.json`** | El plugin `google-services` no degrada: **rompe el build** si falta el archivo. Sin esa condición, nadie podría compilar el proyecto sin tener antes un proyecto de Firebase |
+| Nunca se llama a `setUserIdentifier` ni se ponen custom keys | Un informe no puede reatarse a una persona con nada que ponga esta app |
+
+> ⚠️ **La ofuscación de Dart y Crashlytics no se entienden solas.** El plugin de
+> Crashlytics sube el mapping de R8, así que la mitad Kotlin/Java del stack se
+> lee bien en la consola. Las líneas **Dart** llegan ofuscadas por
+> `--obfuscate`: se descifran a mano con los símbolos que §10 manda archivar.
+>
+> ```bash
+> flutter symbolize -i traza.txt -d build/symbols/1.0.0/app.android-arm64.symbols
+> ```
+>
+> Por eso perder `build/symbols/<versión>` deja los crashes de esa versión
+> ilegibles para siempre.
+
+**Qué datos recibe** (todo automático; la app no añade nada): UUID de instalación
+de Crashlytics (pseudónimo, se regenera al reinstalar o borrar datos), marca /
+modelo / orientación / RAM y disco libres / si está rooteado, versión de Android
+y API level, `applicationId` y versión de la app, timestamp y duración de la
+sesión, y la traza con tipo y mensaje de la excepción. **No** recoge nombre,
+correo, ID de publicidad ni ubicación. Hay que declararlo en el Data Safety form
+como *Crash logs* y *Diagnostics*.
+
+---
+
 ## 6. Tema y diseño (Material 3)
 
 - Un **único seed color** (`AppColors.seed`) genera los esquemas claro y oscuro con `ColorScheme.fromSeed`. Rebrandear una app nueva = cambiar esa constante.
@@ -501,7 +538,7 @@ flutter build appbundle --release --analyze-size
 8. `core/theme/app_colors.dart`: `seed`.
 9. `lib/l10n/*.arb`: textos reales.
 10. Iconos adaptativos (`flutter_launcher_icons`) y splash nativo (`flutter_native_splash`) — **no incluidos** en la plantilla porque necesitan assets reales; añadirlos por app.
-11. Crash reporting (Crashlytics o Sentry) — **pendiente**, obligatorio desde la v1. Enganchar en `AppLogger.error` y en `bootstrap`.
+11. Crash reporting: **integrado** (Firebase Crashlytics, §5.1). Falta solo crear el proyecto en la consola de Firebase y dejar caer `google-services.json` en `android/app/`; sin ese archivo la app compila y funciona, pero no reporta nada.
 12. Política de privacidad publicada en una URL accesible (obligatoria por usar AdMob).
 13. Data Safety form, content rating (IARC), público objetivo, declaración "contiene anuncios".
 14. Testing interno → closed testing (**12 testers / 14 días** para cuentas personales creadas después de nov-2023) → producción con rollout escalonado 10–20 %.

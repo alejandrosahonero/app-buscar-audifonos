@@ -4,6 +4,8 @@ import 'package:buscar_audifonos/app.dart';
 import 'package:buscar_audifonos/core/utils/app_logger.dart';
 import 'package:buscar_audifonos/services/ads/ads_providers.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
+import 'package:buscar_audifonos/services/crash/crash_providers.dart';
+import 'package:buscar_audifonos/services/crash/crash_reporter.dart';
 import 'package:buscar_audifonos/services/review/review_providers.dart';
 import 'package:buscar_audifonos/services/storage/storage_providers.dart';
 import 'package:flutter/foundation.dart';
@@ -27,17 +29,27 @@ Future<void> bootstrap() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
+      // The three handlers below are the only places that report a *fatal*
+      // error: by the time they run, the failure was not handled by anyone.
+      // Everything else in the app logs a caught exception, which stays
+      // non-fatal so the crash-free rate keeps meaning what it says.
       FlutterError.onError = (FlutterErrorDetails details) {
         AppLogger.error(
           'Flutter error',
           error: details.exception,
           stackTrace: details.stack,
+          fatal: true,
         );
         FlutterError.presentError(details);
       };
 
       PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-        AppLogger.error('Platform error', error: error, stackTrace: stack);
+        AppLogger.error(
+          'Platform error',
+          error: error,
+          stackTrace: stack,
+          fatal: true,
+        );
         return true;
       };
 
@@ -65,6 +77,7 @@ Future<void> bootstrap() async {
         'Uncaught zone error',
         error: error,
         stackTrace: stackTrace,
+        fatal: true,
       );
     },
   );
@@ -73,6 +86,22 @@ Future<void> bootstrap() async {
 /// Deferred initialization. Any failure here degrades a feature; none of it may
 /// crash the app or block the UI.
 Future<void> _initializeAfterFirstFrame(ProviderContainer container) async {
+  // Crash reporting goes first so the two initializations below are covered by
+  // it. Its own failure obviously cannot be reported — it is only logged.
+  try {
+    final CrashReporter reporter = container.read(crashReporterProvider);
+    await reporter.initialize();
+    // Attached only after a successful start: a sink wired to a Crashlytics
+    // that never came up would throw inside the error handler itself.
+    AppLogger.attachCrashSink(reporter.report);
+  } on Object catch (error, stackTrace) {
+    AppLogger.error(
+      'Crash reporting initialization failed',
+      error: error,
+      stackTrace: stackTrace,
+    );
+  }
+
   try {
     // Entitlement first: `AdsService` must know whether the user is premium
     // before it requests the first ad.

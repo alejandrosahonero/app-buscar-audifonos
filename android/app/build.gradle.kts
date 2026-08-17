@@ -7,6 +7,24 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase Crashlytics, applied only when the project has been connected to a
+// Firebase project. `google-services.json` is downloaded from the Firebase
+// console into `android/app/`.
+//
+// Conditional on purpose: the google-services plugin does not degrade when the
+// file is missing, it fails the build. Making it unconditional would mean
+// nobody can compile the app until they own a Firebase project. Without the
+// file the app builds and runs exactly as before and simply does not report —
+// `CrashReporter.initialize` catches the missing configuration.
+val hasFirebase = file("google-services.json").exists()
+if (hasFirebase) {
+    apply(plugin = "com.google.gms.google-services")
+    // Uploads the R8 mapping file on every release build, which is what makes
+    // the Kotlin/Java half of a stack trace readable in the console. The Dart
+    // half needs `flutter symbolize` — see CLAUDE.md.
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 // Upload keystore credentials. `key.properties` is git-ignored: create it from
 // `key.properties.example`. When the file is missing (fresh clone, CI without
 // secrets) the release build falls back to the debug signing config so
