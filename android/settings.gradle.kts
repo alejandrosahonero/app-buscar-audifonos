@@ -21,6 +21,13 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "9.0.1" apply false
     id("org.jetbrains.kotlin.android") version "2.3.20" apply false
+
+    // Firebase Crashlytics. Declared here but applied from app/build.gradle.kts
+    // and ONLY when google-services.json exists: the google-services plugin
+    // fails the whole build when the file is missing, and a fresh clone (or CI
+    // without secrets) does not have it.
+    id("com.google.gms.google-services") version "4.5.0" apply false
+    id("com.google.firebase.crashlytics") version "3.0.7" apply false
 }
 
 include(":app")
