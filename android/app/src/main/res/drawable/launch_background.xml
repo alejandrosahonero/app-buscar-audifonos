@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Fallback copy of drawable-v21/launch_background.xml. `minSdk` is 24, so
+     nothing actually resolves to this file; it exists because the Flutter
+     template ships both and leaving them out of sync is a trap for whoever
+     lowers `minSdk` later. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
+    <item android:drawable="@color/ic_launcher_background" />
 
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+    <item
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:gravity="center"
+        android:width="288dp"
+        android:height="288dp" />
 </layer-list>

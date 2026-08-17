@@ -1,12 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
+<!-- Splash for Android 11 and below, drawn as the window background until the
+     Flutter engine paints its first frame. Android 12+ ignores this entirely
+     and uses the system splash screen instead — see values-v31/styles.xml.
 
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+     The icon is the adaptive launcher foreground on the launcher's own
+     background colour, so the app opens out of exactly the image the user
+     tapped instead of flashing an unrelated white rectangle. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background" />
+
+    <!-- Placed with `android:drawable` rather than a <bitmap>: the foreground
+         is a vector, and <bitmap> only accepts real bitmaps.
+
+         288dp is not a taste call — it is the canvas Android 12 gives a splash
+         icon that brings no background of its own. Matching it here makes the
+         logo come out the same size on every Android version instead of
+         jumping when the user upgrades their phone. The artwork fills ~40% of
+         that canvas, so it lands well inside the 192dp the platform allows. -->
+    <item
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:gravity="center"
+        android:width="288dp"
+        android:height="288dp" />
 </layer-list>

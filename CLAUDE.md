@@ -504,6 +504,40 @@ Todo va dentro de `runZonedGuarded`, con `FlutterError.onError` y `PlatformDispa
 
 ---
 
+## 9.1 Icono y splash
+
+Sin `flutter_launcher_icons` ni `flutter_native_splash`: los recursos están
+escritos a mano en `android/app/src/main/res/`, son cuatro archivos y así no hay
+un paso de generación que pueda sobrescribirlos.
+
+**Icono**: adaptativo (`mipmap-anydpi-v26/ic_launcher.xml`) = color
+`@color/ic_launcher_background` + vector `@drawable/ic_launcher_foreground`, más
+`monochrome` para los iconos temáticos de Android 13.
+
+**Splash** — hay que tocar **dos** mecanismos, y esto es lo que se olvida:
+
+| Android | Qué se pinta | Archivo |
+|---|---|---|
+| ≤ 11 | `android:windowBackground` del `LaunchTheme` | `drawable-v21/launch_background.xml` |
+| 12+ (API 31) | Splash Screen del sistema; **ignora `windowBackground`** | `values-v31/styles.xml` y `values-night-v31/styles.xml` |
+
+- Tocar solo el layer-list deja a Android 12+ con el splash por defecto de la
+  plataforma. Es el fallo típico y no da ningún error.
+- **`values-night-v31` hace falta de verdad**: sin él, en un móvil oscuro con
+  Android 12, `values-night` gana sobre `values-v31` y se lleva por delante los
+  atributos del splash.
+- **En el layer-list el icono va como `android:drawable` + `android:gravity`,
+  nunca dentro de un `<bitmap>`**: el foreground es un vector y `<bitmap>` solo
+  acepta bitmaps de verdad.
+- **288dp** es el lienzo que Android 12 da a un icono de splash sin fondo
+  propio; usar el mismo tamaño en el layer-list es lo que hace que el logo se
+  vea igual en todas las versiones. El arte ocupa ~40 % de ese lienzo, así que
+  entra de sobra en los 192dp de zona segura.
+- El splash mantiene el color del icono también en modo oscuro: se abre desde un
+  lanzador que lo muestra así pase lo que pase.
+
+---
+
 ## 10. Comandos
 
 ```bash
@@ -537,7 +571,7 @@ flutter build appbundle --release --analyze-size
 7. `core/config/billing_config.dart`: ID del producto (debe coincidir con Play Console).
 8. `core/theme/app_colors.dart`: `seed`.
 9. `lib/l10n/*.arb`: textos reales.
-10. Iconos adaptativos (`flutter_launcher_icons`) y splash nativo (`flutter_native_splash`) — **no incluidos** en la plantilla porque necesitan assets reales; añadirlos por app.
+10. Icono adaptativo y splash: **hechos a mano, sin `flutter_launcher_icons` ni `flutter_native_splash`** (ver §9.1).
 11. Crash reporting: **integrado** (Firebase Crashlytics, §5.1). Falta solo crear el proyecto en la consola de Firebase y dejar caer `google-services.json` en `android/app/`; sin ese archivo la app compila y funciona, pero no reporta nada.
 12. Política de privacidad publicada en una URL accesible (obligatoria por usar AdMob).
 13. Data Safety form, content rating (IARC), público objetivo, declaración "contiene anuncios".

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ (API 31) splash screen.
+
+     From API 31 the system draws the splash itself and does NOT use
+     `android:windowBackground` for it, so the layer-list in
+     drawable/launch_background.xml only ever reaches Android 11 and below.
+     Without this file the app would show the platform default — the launcher
+     icon on the theme background — instead of a deliberate splash.
+
+     Only `LaunchTheme` is redeclared: resources merge per style name, so
+     `NormalTheme` keeps resolving from values/styles.xml. -->
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+
+        <!-- The system masks this icon into a circle and expects the artwork to
+             sit inside the inner two thirds — the same safe zone an adaptive
+             icon foreground is already drawn for, which is why the foreground
+             is reused verbatim. Passing the full adaptive icon here would
+             double up its background inside the mask. -->
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>

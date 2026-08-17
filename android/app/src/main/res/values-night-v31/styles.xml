@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ splash in dark mode.
+
+     Needed on its own because values-night/styles.xml would otherwise win over
+     values-v31 on a dark phone running Android 12 and take the splash
+     attributes away with it.
+
+     The splash keeps the launcher's own background colour in both modes rather
+     than turning dark: the icon is tapped from a home screen that shows it on
+     that colour regardless of the system theme, and the app should open out of
+     the image the user just pressed. -->
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>
