@@ -1,20 +1,288 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar Audífonos: Localizador</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Buscar Audífonos: Localizador — encuentra dispositivos Bluetooth cercanos mediante intensidad de señal.">
+  <meta name="color-scheme" content="light dark">
+  <title>Buscar Audífonos: Localizador</title>
+
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --surface: #ffffff;
+      --text: #18181b;
+      --muted: #5f6368;
+      --border: #e4e4e7;
+      --accent: #3f51b5;
+      --accent-soft: #eef0ff;
+      --max: 920px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111318;
+        --surface: #181b22;
+        --text: #f5f6f8;
+        --muted: #b5bac4;
+        --border: #30343d;
+        --accent: #aeb8ff;
+        --accent-soft: #242a46;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    a { color: var(--accent); }
+
+    .wrap {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 72px 0 30px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      font-size: .82rem;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 7vw, 4.8rem);
+      line-height: 1.02;
+      margin: 0 0 18px;
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.55rem;
+      line-height: 1.25;
+    }
+
+    p {
+      max-width: 72ch;
+    }
+
+    .lead {
+      font-size: clamp(1.05rem, 2.4vw, 1.28rem);
+      color: var(--muted);
+      max-width: 62ch;
+      margin: 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 17px;
+      border-radius: 999px;
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      transition: transform .15s ease, opacity .15s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .button-primary {
+        color: #111318;
+      }
+    }
+
+    .button-secondary {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: clamp(22px, 4vw, 42px);
+      margin: 20px 0 34px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.04);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .feature {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      background: var(--bg);
+    }
+
+    .feature-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .96rem;
+    }
+
+    .notice {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      padding: 16px 18px;
+      border-radius: 10px;
+      margin-top: 24px;
+    }
+
+    .legal-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    footer {
+      color: var(--muted);
+      padding: 4px 0 52px;
+      font-size: .94rem;
+    }
+
+    @media (max-width: 720px) {
+      header { padding-top: 46px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .card { border-radius: 14px; }
+    }
+  </style>
 </head>
 
 <body>
-<h1>Mi App</h1>
+  <header class="wrap">
+    <p class="eyebrow">Bluetooth Finder</p>
+    <h1>Buscar Audífonos:<br>Localizador</h1>
+    <p class="lead">
+      Encuentra audífonos y otros dispositivos Bluetooth cercanos utilizando
+      la intensidad de señal como guía de proximidad.
+    </p>
 
-<p>Información legal de la aplicación.</p>
+    <div class="hero-actions">
+      <a class="button button-primary" href="#funciones">Ver funciones</a>
+      <a class="button button-secondary" href="privacy-policy.html">Política de privacidad</a>
+    </div>
+  </header>
 
-<p>
-    <a href="privacy-policy.html">
-        Política de privacidad
-    </a>
-</p>
+  <main class="wrap">
+    <section id="funciones" class="card">
+      <p class="eyebrow">Funciones principales</p>
+      <h2>Una forma sencilla de localizar dispositivos cercanos</h2>
+
+      <div class="feature-grid">
+        <article class="feature">
+          <div class="feature-icon" aria-hidden="true">⌁</div>
+          <strong>Escaneo Bluetooth</strong>
+          <p>
+            Detecta dispositivos Bluetooth Low Energy cercanos y actualiza su señal mientras te mueves.
+          </p>
+        </article>
+
+        <article class="feature">
+          <div class="feature-icon" aria-hidden="true">◉</div>
+          <strong>Radar de proximidad</strong>
+          <p>
+            Convierte la intensidad RSSI en una referencia visual de cercanía para ayudarte a acercarte al dispositivo.
+          </p>
+        </article>
+
+        <article class="feature">
+          <div class="feature-icon" aria-hidden="true">★</div>
+          <strong>Favoritos</strong>
+          <p>
+            Guarda dispositivos importantes para reconocerlos rápidamente en futuros escaneos.
+          </p>
+        </article>
+      </div>
+
+      <div class="notice">
+        <strong>Privacidad desde el diseño.</strong>
+        El escaneo Bluetooth, la identificación de dispositivos y los favoritos se gestionan localmente
+        en el dispositivo. La app no utiliza un backend propio para almacenar los dispositivos encontrados.
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">Privacy</p>
+      <h2>Privacy by design</h2>
+      <p>
+        Buscar Audífonos: Localizador processes Bluetooth scan information locally on your device.
+        It does not require a user account and does not send detected Bluetooth devices to a server
+        operated by the developer.
+      </p>
+
+      <div class="legal-links">
+        <a class="button button-primary" href="privacy-policy.html">
+          Privacy Policy / Política de privacidad
+        </a>
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">Contacto</p>
+      <h2>Soporte y privacidad</h2>
+      <p>
+        Para consultas relacionadas con la aplicación o con la privacidad:
+        <a href="mailto:alesaho05+privacy@gmail.com">alesaho05+privacy@gmail.com</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <p>© 2026 Alejandro Sahonero — Buscar Audífonos: Localizador</p>
+  </footer>
 </body>
 </html>
