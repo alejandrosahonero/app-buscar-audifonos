@@ -112,6 +112,8 @@
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "System language",
   "settingsMonetization": "Subscription and ads",
   "settingsRemoveAds": "Remove ads",
   "settingsRestorePurchases": "Restore purchases",

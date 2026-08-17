@@ -1,5 +1,6 @@
 import 'package:buscar_audifonos/core/config/app_config.dart';
 import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
+import 'package:buscar_audifonos/core/l10n/locale_controller.dart';
 import 'package:buscar_audifonos/core/routing/app_routes.dart';
 import 'package:buscar_audifonos/core/theme/app_spacing.dart';
 import 'package:buscar_audifonos/core/theme/theme_controller.dart';
@@ -64,6 +65,37 @@ class SettingsScreen extends ConsumerWidget {
                 RadioListTile<ThemeMode>(
                   value: ThemeMode.dark,
                   title: Text(context.l10n.settingsThemeDark),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          _SectionHeader(title: context.l10n.settingsLanguage),
+          RadioGroup<String?>(
+            // Keyed by language code rather than by `Locale`: two `Locale`
+            // instances for the same language are not equal unless every field
+            // matches, and the radio group compares by equality.
+            groupValue: ref.watch(localeProvider)?.languageCode,
+            onChanged: (String? code) => ref
+                .read(localeProvider.notifier)
+                .setLocale(code == null ? null : Locale(code))
+                .ignore(),
+            child: Column(
+              children: <Widget>[
+                RadioListTile<String?>(
+                  value: null,
+                  title: Text(context.l10n.settingsLanguageSystem),
+                ),
+                // Each language names itself, never translated: someone stuck
+                // in a language they cannot read has to be able to find their
+                // own on this list.
+                const RadioListTile<String?>(
+                  value: 'es',
+                  title: Text('Español'),
+                ),
+                const RadioListTile<String?>(
+                  value: 'en',
+                  title: Text('English'),
                 ),
               ],
             ),

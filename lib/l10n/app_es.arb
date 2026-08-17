@@ -226,6 +226,11 @@
   "settingsThemeSystem": "Sistema",
   "settingsThemeLight": "Claro",
   "settingsThemeDark": "Oscuro",
+  "settingsLanguage": "Idioma",
+  "settingsLanguageSystem": "Idioma del sistema",
+  "@settingsLanguageSystem": {
+    "description": "Opción por defecto: la app sigue el idioma del teléfono. Los nombres de los idiomas concretos («Español», «English») no se traducen y por eso no están aquí."
+  },
   "settingsMonetization": "Suscripción y anuncios",
   "settingsRemoveAds": "Quitar anuncios",
   "settingsRestorePurchases": "Restaurar compras",

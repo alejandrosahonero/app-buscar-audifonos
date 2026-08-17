@@ -163,6 +163,38 @@ void main() {
     expect(find.text('2 hidden'), findsOneWidget);
   });
 
+  testWidgets('the stored language wins over the phone language', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      scanService: _FakeScanService(),
+      preferences: <String, Object>{'app_locale': 'es'},
+    );
+
+    // Same screen the other tests read in English.
+    expect(find.text('Escanear'), findsOneWidget);
+    expect(find.text('Ningún dispositivo a la vista'), findsOneWidget);
+    expect(find.text('Scan'), findsNothing);
+  });
+
+  testWidgets('settings switches the language without a restart', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(tester, scanService: _FakeScanService());
+
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    // Each language names itself, so these two read the same in every locale.
+    expect(find.text('Español'), findsOneWidget);
+    await tester.tap(find.text('Español'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ajustes'), findsOneWidget);
+    expect(find.text('Idioma'), findsOneWidget);
+  });
+
   testWidgets('the scan hint points at the button only while idle', (
     WidgetTester tester,
   ) async {
