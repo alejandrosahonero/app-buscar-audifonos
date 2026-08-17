@@ -51,17 +51,18 @@
          required by Play Billing and the AdMob SDK. -->
 
     <application
-        android:label="${appName}"
+        android:label="Buscar Audífonos: Localizador"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true">
 
         <!-- ==============================================================
              AdMob App ID — OFFICIAL GOOGLE TEST ID.
-             Replace it with the production App ID only when you ship, and
-             keep the test id in the dev flavor. Shipping a production App ID
-             in a debug build is a direct cause of an AdMob ban for invalid
-             traffic.
+             Replace it with the production App ID only when you ship. Unlike
+             the ad unit ids, this one lives in the manifest and cannot switch
+             on the build mode, so swapping it is a manual step on the release
+             checklist. Shipping a production App ID while still developing is
+             a direct cause of an AdMob ban for invalid traffic.
              ============================================================== -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

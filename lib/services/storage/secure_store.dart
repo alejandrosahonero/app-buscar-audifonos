@@ -15,8 +15,8 @@ class SecureStore {
   final FlutterSecureStorage _storage;
 
   static const AndroidOptions androidOptions = AndroidOptions(
-    // Keeps the namespace stable across `applicationId` suffixes (dev/prod
-    // flavors write to separate app sandboxes anyway).
+    // Explicit namespace so the entitlement survives any future change to the
+    // encrypted-preferences file name the plugin picks by default.
     storageNamespace: 'buscar_audifonos_secure',
   );
 

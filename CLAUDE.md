@@ -265,7 +265,7 @@ y migrar los providers a `@riverpod`. Añadir entonces `custom_lint` al `analysi
 **IDs.** `core/config/ad_config.dart` mantiene dos juegos: los **IDs oficiales de prueba de Google** y los de producción (vacíos hasta que existan). La selección es automática:
 
 ```dart
-AppConfig.useProductionAds  // == isProd && kReleaseMode
+AppConfig.useProductionAds  // == kReleaseMode
 ```
 
 Un ID vacío **desactiva** ese formato en vez de romper. **Nunca** usar IDs de producción en debug: es causa directa de baneo por tráfico inválido.
@@ -402,13 +402,15 @@ Todo va dentro de `runZonedGuarded`, con `FlutterError.onError` y `PlatformDispa
 - `applicationId = com.alejandrosahonero.buscaraudifonos` — **no se puede cambiar nunca** tras publicar.
 - Release: `isMinifyEnabled = true`, `isShrinkResources = true`, `proguard-rules.pro`.
 - **Firma:** lee `android/key.properties` (git-ignored). Si no existe, cae a la firma de debug para no romper builds locales. Antes de publicar, verificar que `key.properties` existe y que el AAB **no** va firmado con debug.
-- **Flavors `dev` / `prod`** con `applicationIdSuffix = ".dev"`, para tener ambas instaladas a la vez.
-- El nombre visible viaja como **manifest placeholder** (`${appName}`), no como `resValue`: AGP 9 desactiva la build feature `resValues` por defecto y un `resValue` en un flavor rompe la configuración del proyecto.
+- El nombre visible se declara directo en `AndroidManifest.xml` (`android:label`).
 
-> ⚠️ **Con flavors, `flutter run` a secas falla.** Hay que indicar el flavor:
-> ```bash
-> flutter run --flavor dev --dart-define=APP_ENV=dev
-> ```
+> ⚠️ **Sin flavors y sin entornos, a propósito. No reintroducirlos.**
+>
+> Había un split `dev` / `prod` con `applicationIdSuffix` y un `--dart-define=APP_ENV`.
+> Obligaba a arrastrar `--flavor` en **cada** comando y hacía que un `flutter run`
+> a secas fallara, a cambio de una sola garantía real: no pedir IDs de anuncios
+> de producción desde desarrollo. Esa garantía la da ahora `kReleaseMode` en
+> `AppConfig.useProductionAds`, y no se puede romper por olvidar un argumento.
 
 ---
 
@@ -416,18 +418,18 @@ Todo va dentro de `runZonedGuarded`, con `FlutterError.onError` y `PlatformDispa
 
 ```bash
 # Desarrollo
-flutter run --flavor dev --dart-define=APP_ENV=dev
+flutter run
 
 # Calidad (obligatorio antes de cerrar una tarea)
 dart format lib test && flutter analyze && flutter test
 
 # Release para Play (AAB, ofuscado, símbolos archivados por versión)
 flutter clean && flutter pub get
-flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod \
+flutter build appbundle --release \
   --obfuscate --split-debug-info=build/symbols/1.0.0
 
 # Auditoría de tamaño (objetivo: AAB < 15 MB)
-flutter build appbundle --release --flavor prod --analyze-size
+flutter build appbundle --release --analyze-size
 ```
 
 **Guardar `build/symbols/<versión>` fuera del repo.** Sin esos símbolos los crashes son ilegibles.
@@ -439,7 +441,7 @@ flutter build appbundle --release --flavor prod --analyze-size
 1. `pubspec.yaml`: `name`, `description`, `version`.
 2. `android/app/build.gradle.kts`: `namespace` y `applicationId` definitivos (formato `com.empresa.app`).
 3. Renombrar el paquete Kotlin en `android/app/src/main/kotlin/...` acorde.
-4. `android/app/build.gradle.kts` → `manifestPlaceholders["appName"]` de cada flavor con el nombre visible real.
+4. `AndroidManifest.xml` → `android:label` con el nombre visible real.
 5. `core/config/ad_config.dart`: rellenar `_prodBanner`, `_prodInterstitial`, `_prodRewarded`.
 6. `AndroidManifest.xml`: sustituir el App ID de prueba de AdMob por el de producción.
 7. `core/config/billing_config.dart`: ID del producto (debe coincidir con Play Console).

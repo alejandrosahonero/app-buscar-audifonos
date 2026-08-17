@@ -1,32 +1,19 @@
 import 'package:flutter/foundation.dart';
 
-/// Build environments. Selected with `--dart-define=APP_ENV=prod` and matched
-/// by the Android product flavors (`dev` / `prod`).
-enum AppEnvironment { dev, prod }
-
 /// Immutable, compile-time application configuration.
 ///
-/// Everything that changes between environments lives here so no feature code
-/// has to branch on `kReleaseMode` by itself.
+/// There is no environment concept and no `--dart-define`: a single build
+/// configuration, with the release/debug distinction Flutter already gives us.
+/// The one decision that ever needed environments is [useProductionAds], and
+/// it is safer keyed off the build mode.
 abstract final class AppConfig {
-  static const String _rawEnv = String.fromEnvironment(
-    'APP_ENV',
-    defaultValue: 'dev',
-  );
-
-  /// Current environment. Defaults to [AppEnvironment.dev] so a plain
-  /// `flutter run` never touches production resources.
-  static final AppEnvironment environment = switch (_rawEnv) {
-    'prod' => AppEnvironment.prod,
-    _ => AppEnvironment.dev,
-  };
-
-  static bool get isProd => environment == AppEnvironment.prod;
-
   /// Real ads (production ad unit ids) are only ever requested from a release
-  /// build of the `prod` flavor. Requesting production ads from a debug build
-  /// is the fastest way to get an AdMob account banned for invalid traffic.
-  static bool get useProductionAds => isProd && kReleaseMode;
+  /// build. Requesting production ads from a debug build is the fastest way to
+  /// get an AdMob account banned for invalid traffic.
+  ///
+  /// Keyed off [kReleaseMode] alone, so the protection cannot be defeated by
+  /// forgetting a command line argument.
+  static bool get useProductionAds => kReleaseMode;
 
   /// Shown in Settings. Keep in sync with `version:` in pubspec.yaml.
   static const String versionName = '1.0.0';

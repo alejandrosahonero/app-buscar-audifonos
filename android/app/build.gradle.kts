@@ -73,30 +73,22 @@ android {
             )
         }
         debug {
-            // Lets the dev flavor be installed next to a release build.
+            // R8 off in debug: it costs build time and mangles stack traces,
+            // which is exactly what you need readable while developing.
             isMinifyEnabled = false
         }
     }
 
-    // dev / prod flavors. Different applicationId suffix so both can be
-    // installed on the same device at the same time.
+    // No product flavors on purpose. A `dev` / `prod` split forced every single
+    // command to carry `--flavor`, and a plain `flutter run` simply failed. The
+    // one thing the split actually protected — never requesting production ad
+    // units from a development build — is covered by `kReleaseMode` in
+    // AppConfig.useProductionAds, which cannot be got wrong by forgetting a
+    // command line argument. Do not reintroduce them.
     //
-    // The visible name travels as a manifest placeholder (`${appName}` in
-    // AndroidManifest.xml) instead of a `resValue`: AGP 9 disables the
-    // resValues build feature by default.
-    flavorDimensions += "env"
-    productFlavors {
-        create("dev") {
-            dimension = "env"
-            applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev"
-            manifestPlaceholders["appName"] = "Buscar Audífonos: Localizador Dev"
-        }
-        create("prod") {
-            dimension = "env"
-            manifestPlaceholders["appName"] = "Buscar Audífonos: Localizador"
-        }
-    }
+    // The visible name is declared straight in AndroidManifest.xml
+    // (`android:label`), not as a manifest placeholder: there is no longer a
+    // per-flavor value to inject.
 }
 
 kotlin {

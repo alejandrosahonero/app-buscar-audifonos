@@ -2,7 +2,7 @@
 
 Plantilla base (Base Starter Template) en Flutter para desarrollar y publicar aplicaciones Android en Google Play con rapidez.
 
-Trae preconfigurado lo que todas las apps repiten: monetización (AdMob + compra "quitar anuncios"), consentimiento GDPR, permisos de Android 12+, reseñas in-app, tema Material 3 claro/oscuro, navegación declarativa, localización es/en y el pipeline de release (ofuscación, R8, firma, flavors).
+Trae preconfigurado lo que todas las apps repiten: monetización (AdMob + compra "quitar anuncios"), consentimiento GDPR, permisos de Android 12+, reseñas in-app, tema Material 3 claro/oscuro, navegación declarativa, localización es/en y el pipeline de release (ofuscación, R8, firma).
 
 > **Para agentes de IA y para cualquiera que toque el código: leer [`CLAUDE.md`](CLAUDE.md) primero.** Explica la arquitectura, las reglas y el porqué de cada decisión.
 
@@ -29,10 +29,11 @@ Trae preconfigurado lo que todas las apps repiten: monetización (AdMob + compra
 
 ```bash
 flutter pub get
-flutter run --flavor dev --dart-define=APP_ENV=dev
+flutter run
 ```
 
-> El proyecto define los flavors `dev` y `prod`, así que **`flutter run` a secas falla**: hay que pasar `--flavor`.
+> Sin flavors y sin entornos: `flutter run` a secas funciona, y no hay ningún
+> `--flavor` ni `--dart-define` que recordar. Ver [`CLAUDE.md` §9](CLAUDE.md).
 
 Antes de cerrar cualquier cambio:
 
@@ -47,14 +48,14 @@ dart format lib test && flutter analyze && flutter test
 El checklist completo está en [`CLAUDE.md` §11](CLAUDE.md). En resumen:
 
 1. `pubspec.yaml` → `name`, `description`, `version`.
-2. `android/app/build.gradle.kts` → `namespace`, `applicationId` y `manifestPlaceholders["appName"]` de cada flavor.
+2. `android/app/build.gradle.kts` → `namespace` y `applicationId`; `AndroidManifest.xml` → `android:label`.
 3. `lib/core/config/ad_config.dart` → IDs de producción de AdMob (los de prueba ya están puestos).
 4. `android/app/src/main/AndroidManifest.xml` → App ID de AdMob de producción.
 5. `lib/core/config/billing_config.dart` → ID del producto de Play Console.
 6. `lib/core/theme/app_colors.dart` → `seed`.
 7. `lib/l10n/*.arb` → textos.
 
-**Los anuncios usan exclusivamente los IDs oficiales de prueba de Google.** Los IDs de producción solo se activan en un build `--release --flavor prod`, para que nunca se genere tráfico inválido desde desarrollo.
+**Los anuncios usan exclusivamente los IDs oficiales de prueba de Google.** Los IDs de producción solo se activan en un build `--release`, para que nunca se genere tráfico inválido desde desarrollo.
 
 ---
 
@@ -62,7 +63,7 @@ El checklist completo está en [`CLAUDE.md` §11](CLAUDE.md). En resumen:
 
 ```bash
 flutter clean && flutter pub get
-flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod \
+flutter build appbundle --release \
   --obfuscate --split-debug-info=build/symbols/1.0.0
 ```
 
