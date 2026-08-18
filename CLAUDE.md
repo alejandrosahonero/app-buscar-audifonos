@@ -203,16 +203,19 @@ Decisiones que conviene no deshacer:
   §1.1) y pierden el porcentaje, el indicador de señal y los chips. Es la misma
   regla del radar aplicada a la lista: **lo que un dispositivo *es* sobrevive al
   silencio; lo que se *oye* de él, no.**
-- **Todas las filas miden lo mismo, tengan chips o no.** La línea de chips se
-  reserva siempre (`deviceMetaChipHeight`), y cuando no hay nada que poner ahí
-  va un `DeviceMetaChip` sin tinta, **no** un hueco vacío.
+- **Todas las filas miden lo mismo (82 dp), tengan o no marca y chips.** Las dos
+  líneas bajo el título se reservan siempre: la de «tipo · marca» se pinta con
+  cadena vacía cuando no hay nada que decir, y la de chips con
+  `deviceMetaChipHeight`. Con el contenido igualado, la altura la fija el propio
+  contenido (`isThreeLine: false`, `minTileHeight: 0`,
+  `minVerticalPadding: AppSpacing.sm`) en vez de redondear al escalón de tres
+  líneas de Material, que era de dónde salían los 88 dp.
 
-  > ⚠️ La razón no es el alto del hueco, es la **línea base**: `ListTile` coloca
-  > título y subtítulo a partir de sus baselines, y un subtítulo sin texto no
-  > tiene ninguna. El fallback (su alto completo) los junta hasta que el tile se
-  > pasa a su *layout* compacto —`2·padding + título + subtítulo` en vez de los
-  > 88 dp— y esa era exactamente la tarjeta más baja que aparecía en las filas
-  > sin chips. Un `SizedBox` de la misma altura **no** lo arregla.
+  > ⚠️ Reservar el **alto** no basta: `ListTile` coloca título y subtítulo a
+  > partir de sus **líneas base**, y un subtítulo sin texto dentro no tiene
+  > ninguna. El fallback (su alto completo) los junta hasta que el tile se pasa
+  > solo a su *layout* compacto, y ahí estaba la fila más baja. Por eso los
+  > huecos se rellenan con `Text('')`, no con un `SizedBox`.
 
 - **La barra de filtros es una sola fila que se desplaza**, no un `Wrap`: una
   segunda línea de chips empuja la lista hacia abajo justo en los móviles que

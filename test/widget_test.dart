@@ -128,12 +128,17 @@ DiscoveredDevice _device({
 
 /// Builds the stored form of the favourites list, exactly as
 /// `FavoriteDevicesController` writes it.
-String _storedFavorites(List<({String id, String name})> favorites) {
+String _storedFavorites(
+  List<({String id, String name})> favorites, {
+  String? vendor,
+}) {
   return jsonEncode(<Map<String, Object?>>[
     for (final ({String id, String name}) favorite in favorites)
       FavoriteDevice(
         id: favorite.id,
-        identity: DeviceIdentity(advertisedName: favorite.name),
+        // `vendor` is what gives a row its "kind · brand" line. Half the
+        // favourites in the wild have one and half do not.
+        identity: DeviceIdentity(advertisedName: favorite.name, vendor: vendor),
       ).toJson(),
   ]);
 }
@@ -341,11 +346,21 @@ void main() {
         ],
       ),
       preferences: <String, Object>{
-        'finder_favorite_devices': _storedFavorites(
-          <({String id, String name})>[
-            (id: 'AA:BB:CC:DD:EE:09', name: 'Lost buds'),
-          ],
-        ),
+        // One favourite with a brand line and one without: the pair that used
+        // to render at two different heights.
+        'finder_favorite_devices': jsonEncode(<Map<String, Object?>>[
+          const FavoriteDevice(
+            id: 'AA:BB:CC:DD:EE:08',
+            identity: DeviceIdentity(advertisedName: 'Plain buds'),
+          ).toJson(),
+          const FavoriteDevice(
+            id: 'AA:BB:CC:DD:EE:09',
+            identity: DeviceIdentity(
+              advertisedName: 'Lost buds',
+              vendor: 'Sony',
+            ),
+          ).toJson(),
+        ]),
       },
     );
 
@@ -354,13 +369,16 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('80%'), findsOneWidget);
+    expect(find.text('Sony'), findsOneWidget);
 
-    // The silent favourite and the chatty speaker measure the same: the chip
-    // line is reserved either way, so the list does not jump as devices come
-    // and go.
-    final double offline = tester.getSize(find.byType(ListTile).first).height;
-    final double live = tester.getSize(find.byType(ListTile).last).height;
-    expect(offline, live);
+    // Three rows, three states — no brand line, a brand line, and a live
+    // reading with a chip — and one height between them.
+    final Iterable<double> heights = tester
+        .widgetList<ListTile>(find.byType(ListTile))
+        .map((ListTile tile) => tester.getSize(find.byWidget(tile)).height);
+
+    expect(heights.length, 3);
+    expect(heights.toSet(), hasLength(1));
   });
 
   testWidgets('stopping the scan takes the readings away with it', (

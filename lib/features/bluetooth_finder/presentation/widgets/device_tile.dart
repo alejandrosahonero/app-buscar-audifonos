@@ -50,7 +50,14 @@ class DeviceTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       onLongPress: onLongPress,
-      isThreeLine: true,
+      // The height is the row's own content plus its padding, not one of
+      // Material's one/two/three-line buckets. Both lines under the title are
+      // reserved below, so that content measures the same on every row — and
+      // it comes out shorter than the three-line bucket the rows used to be
+      // rounded up to.
+      isThreeLine: false,
+      minTileHeight: 0,
+      minVerticalPadding: AppSpacing.sm,
       leading: DeviceAvatar(
         category: identity.category,
         band: device?.band ?? ProximityBand.far,
@@ -70,29 +77,24 @@ class DeviceTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (summary != null)
-            Text(
-              summary,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.texts.bodySmall?.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
+          // Always one line, even when the advertisement named neither the kind
+          // nor the brand: an empty string still occupies a line box and still
+          // has a baseline, which is what `ListTile` measures the subtitle by.
+          // Half the favourites say "Auriculares · Sony" and half say nothing,
+          // and the two must not be different heights.
+          Text(
+            summary ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.texts.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
             ),
+          ),
           const SizedBox(height: AppSpacing.xs),
-          // The chip line is always exactly one chip tall, even when there is
-          // nothing to put in it: a row that shrinks the moment its device goes
-          // quiet makes the whole list jump. Anything past the first line is
-          // clipped rather than allowed to grow the row; the chips are already
-          // ordered most useful first.
-          //
-          // The placeholder is a real chip with the ink taken off it, not an
-          // empty box, and that matters more than it looks: `ListTile` lays the
-          // title and subtitle out from their **baselines**, and a subtitle
-          // with no text in it has none. Falling back to its full height pulls
-          // the pair together until the tile gives up and switches to its
-          // compact layout — which is exactly the shorter card that showed up
-          // on the rows with no chips.
+          // Same rule for the chips: exactly one chip tall whether or not there
+          // is anything to put in it, so a device going quiet does not resize
+          // its row. Anything past the first line is clipped rather than
+          // allowed to grow it; the chips are ordered most useful first.
           SizedBox(
             height: deviceMetaChipHeight(context),
             child: ClipRect(
@@ -101,13 +103,7 @@ class DeviceTile extends StatelessWidget {
                 // Nothing readable while it cannot be heard: battery, traits
                 // and "paired" all describe a packet, and there is no packet.
                 child: device == null
-                    ? const Visibility(
-                        visible: false,
-                        maintainSize: true,
-                        maintainAnimation: true,
-                        maintainState: true,
-                        child: DeviceMetaChip(icon: Icons.bluetooth, label: ''),
-                      )
+                    ? const SizedBox.shrink()
                     : DeviceMetaChips(
                         identity: identity,
                         isPaired: device.isPaired,
