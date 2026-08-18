@@ -1,9 +1,9 @@
 {
   "@@locale": "es",
 
-  "appTitle": "Buscar Audífonos: Localizador",
+  "appTitle": "Buscar Audífonos",
   "@appTitle": {
-    "description": "Nombre visible de la aplicación"
+    "description": "Nombre corto de la app, el que lleva la barra superior. El largo del lanzador y de la ficha de Play vive en AndroidManifest.xml"
   },
 
   "commonCancel": "Cancelar",
@@ -73,10 +73,17 @@
   },
   "finderFavoritesTitle": "Favoritos",
   "finderOtherDevicesTitle": "Otros dispositivos",
-  "finderFavoriteOffline": "Sin conexión",
-  "@finderFavoriteOffline": {
-    "description": "Chip de un favorito del que ahora mismo no se recibe señal"
+  "finderFavoriteActions": "Opciones de {name}",
+  "@finderFavoriteActions": {
+    "description": "Título del menú que abre una pulsación larga sobre un favorito",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
+  "finderFavoriteEditName": "Editar nombre",
+  "finderFavoriteRemoveAction": "Quitar favorito",
   "finderFavoriteRemoveTitle": "¿Quitar de favoritos?",
   "finderFavoriteRemoveBody": "{name} dejará de aparecer en la parte superior de la lista. Para volver a añadirlo tendrás que ver otro anuncio.",
   "@finderFavoriteRemoveBody": {
@@ -87,10 +94,6 @@
     }
   },
   "finderFavoriteRemoved": "Eliminado de favoritos.",
-  "finderRenameTooltip": "Cambiar el nombre",
-  "@finderRenameTooltip": {
-    "description": "Botón de editar que sustituye a la señal en un favorito mientras el escaneo está detenido"
-  },
   "finderRenameTitle": "Cambiar el nombre",
   "finderRenameFieldLabel": "Nombre",
   "finderRenameHelp": "Déjalo vacío para volver al nombre que anuncia el dispositivo.",

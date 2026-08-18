@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
 
-  "appTitle": "Buscar Audífonos: Localizador",
+  "appTitle": "Buscar Audífonos",
 
   "commonCancel": "Cancel",
   "commonContinue": "Continue",
@@ -32,11 +32,12 @@
   "finderEmptyTitle": "Tap \"Scan\" to look for devices",
   "finderFavoritesTitle": "Favourites",
   "finderOtherDevicesTitle": "Other devices",
-  "finderFavoriteOffline": "No signal",
+  "finderFavoriteActions": "{name} options",
+  "finderFavoriteEditName": "Edit name",
+  "finderFavoriteRemoveAction": "Remove favourite",
   "finderFavoriteRemoveTitle": "Remove from favourites?",
   "finderFavoriteRemoveBody": "{name} will no longer show at the top of the list. Adding it back takes another ad.",
   "finderFavoriteRemoved": "Removed from favourites.",
-  "finderRenameTooltip": "Rename",
   "finderRenameTitle": "Rename device",
   "finderRenameFieldLabel": "Name",
   "finderRenameHelp": "Leave it empty to go back to the name the device advertises.",

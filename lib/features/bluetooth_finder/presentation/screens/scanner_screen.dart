@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
 import 'package:buscar_audifonos/core/routing/app_routes.dart';
 import 'package:buscar_audifonos/core/theme/app_spacing.dart';
+import 'package:buscar_audifonos/core/widgets/app_loader.dart';
 import 'package:buscar_audifonos/core/widgets/base_screen.dart';
-import 'package:buscar_audifonos/core/widgets/empty_state.dart';
 import 'package:buscar_audifonos/core/widgets/permission_dialogs.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
@@ -21,13 +21,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+/// What the long-press menu on a favourite can return.
+enum _FavoriteAction { rename, unpin }
+
 /// The app's main screen: everything the phone can hear, strongest first, with
 /// the user's pinned devices held above it.
 ///
 /// Built on [BaseScreen], so the anchored adaptive banner sits below the list
-/// and below the scan button (never over either) and disappears for premium
-/// users. A list screen is exactly the placement the project guide allows a
-/// banner on.
+/// and disappears for premium users. A list screen is exactly the placement the
+/// project guide allows a banner on.
+///
+/// Scanning is started and stopped from the app bar. There is no floating
+/// button: it sat over the last rows of the very list it fills, and one thumb
+/// slip away from the banner underneath it.
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
 
@@ -79,21 +85,22 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     return BaseScreen(
       title: context.l10n.appTitle,
       actions: <Widget>[
+        // The scan control lives here now, not in a floating button: the list
+        // is what the user reads, and a button hovering over its last rows was
+        // covering the thing it produces.
+        IconButton(
+          onPressed: () => _toggleScan(isScanning: isScanning),
+          icon: Icon(isScanning ? Icons.stop : Icons.bluetooth_searching),
+          tooltip: isScanning
+              ? context.l10n.finderScanStop
+              : context.l10n.finderScanStart,
+        ),
         IconButton(
           onPressed: () => context.goNamed(AppRoutes.settingsName),
           icon: const Icon(Icons.settings_outlined),
           tooltip: context.l10n.settingsTitle,
         ),
       ],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _toggleScan(isScanning: isScanning),
-        icon: Icon(isScanning ? Icons.stop : Icons.bluetooth_searching),
-        label: Text(
-          isScanning
-              ? context.l10n.finderScanStop
-              : context.l10n.finderScanStart,
-        ),
-      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -105,8 +112,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               devices: unpinned,
               isScanning: isScanning,
               onOpen: _openRadar,
-              onUnpin: _confirmUnpin,
-              onRename: _renameFavorite,
+              onFavoriteMenu: _showFavoriteActions,
+              onStartScan: () => _toggleScan(isScanning: false),
             ),
           ),
         ],
@@ -119,6 +126,64 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       AppRoutes.radarName,
       pathParameters: <String, String>{AppRoutes.radarDeviceIdParam: deviceId},
     );
+  }
+
+  /// The two things that can be done to a pinned device, on a long press.
+  ///
+  /// A menu rather than controls on the row: both actions are occasional, and
+  /// a destructive one sitting next to the row's own tap target is how people
+  /// lose a favourite by accident.
+  Future<void> _showFavoriteActions(FavoriteDevice favorite) async {
+    final _FavoriteAction? action = await showDialog<_FavoriteAction>(
+      context: context,
+      builder: (BuildContext dialogContext) => SimpleDialog(
+        title: Text(
+          dialogContext.l10n.finderFavoriteActions(
+            deviceDisplayName(
+              dialogContext,
+              favorite.identity,
+              customName: favorite.customName,
+            ),
+          ),
+        ),
+        children: <Widget>[
+          SimpleDialogOption(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_FavoriteAction.rename),
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(dialogContext.l10n.finderFavoriteEditName),
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_FavoriteAction.unpin),
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                Icons.star_border,
+                color: dialogContext.colors.error,
+              ),
+              title: Text(
+                dialogContext.l10n.finderFavoriteRemoveAction,
+                style: TextStyle(color: dialogContext.colors.error),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (action == null || !mounted) return;
+    switch (action) {
+      case _FavoriteAction.rename:
+        await _renameFavorite(favorite);
+      // Straight into the existing confirmation, which is the one that warns
+      // that pinning it again costs another video.
+      case _FavoriteAction.unpin:
+        await _confirmUnpin(favorite);
+    }
   }
 
   /// Lets the user name a favourite whatever they call it out loud.
@@ -345,6 +410,47 @@ class _Notice extends StatelessWidget {
   }
 }
 
+/// The empty list's call to action: the icon *is* the button.
+///
+/// This is the only scan control on the screen while the list is empty, and it
+/// is where the user is already looking — the middle of the empty space they
+/// are wondering about. Once a scan is running it disappears, text and all:
+/// the app bar keeps the control from then on, next to the results.
+class _ScanInvitation extends StatelessWidget {
+  const _ScanInvitation({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            // Sized well past the 48 dp minimum: it is the primary action of an
+            // otherwise empty screen.
+            IconButton.filled(
+              onPressed: onPressed,
+              iconSize: 56,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              icon: const Icon(Icons.bluetooth_searching),
+              tooltip: context.l10n.finderScanStart,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              context.l10n.finderEmptyTitle,
+              textAlign: TextAlign.center,
+              style: context.texts.titleMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Favourites on top, everything the scan can hear below them.
 ///
 /// One scroll view rather than two stacked lists: the favourites section is
@@ -356,16 +462,16 @@ class _ScannerList extends StatelessWidget {
     required this.devices,
     required this.isScanning,
     required this.onOpen,
-    required this.onUnpin,
-    required this.onRename,
+    required this.onFavoriteMenu,
+    required this.onStartScan,
   });
 
   final List<FavoriteDevice> favorites;
   final List<DiscoveredDevice> devices;
   final bool isScanning;
   final void Function(String deviceId) onOpen;
-  final void Function(FavoriteDevice favorite) onUnpin;
-  final void Function(FavoriteDevice favorite) onRename;
+  final void Function(FavoriteDevice favorite) onFavoriteMenu;
+  final VoidCallback onStartScan;
 
   @override
   Widget build(BuildContext context) {
@@ -383,8 +489,7 @@ class _ScannerList extends StatelessWidget {
                 key: ValueKey<String>(favorite.id),
                 favorite: favorite,
                 onTap: () => onOpen(favorite.id),
-                onLongPress: () => onUnpin(favorite),
-                onRename: () => onRename(favorite),
+                onLongPress: () => onFavoriteMenu(favorite),
               );
             },
           ),
@@ -394,20 +499,18 @@ class _ScannerList extends StatelessWidget {
         if (devices.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
-            child: EmptyState(
-              icon: isScanning ? Icons.radar : Icons.bluetooth_searching,
-              title: isScanning
-                  ? context.l10n.finderScanningTitle
-                  : context.l10n.finderEmptyTitle,
-              // Nothing under the title before the first scan: the title is
-              // already the whole call to action.
-              message: isScanning ? context.l10n.finderScanningMessage : null,
-            ),
+            // Scanning with nothing heard yet: the invitation has been taken,
+            // so it steps aside and only the "we are working" spinner is left.
+            // The rows appear underneath it as they are heard.
+            child: isScanning
+                ? const Center(child: AppLoader())
+                : _ScanInvitation(onPressed: onStartScan),
           )
         else
           SliverPadding(
-            // Clears the floating button from the last row.
-            padding: const EdgeInsets.only(bottom: AppSpacing.xxl * 2),
+            // Breathing room under the last row, and clearance from the banner
+            // that the scaffold puts below the list.
+            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
             // A busy room easily produces a hundred advertisers, so the rows
             // are built lazily.
             sliver: SliverList.builder(

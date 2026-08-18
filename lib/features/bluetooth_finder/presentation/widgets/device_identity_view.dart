@@ -116,11 +116,18 @@ class DeviceAvatar extends StatelessWidget {
     required this.band,
     this.color,
     this.size = 44,
+    this.offline = false,
     super.key,
   });
 
   final DeviceCategory category;
   final ProximityBand band;
+
+  /// Nothing is being heard from this device. The badge shows a crossed-out
+  /// radio instead of the category icon: on a row whose whole job is "where is
+  /// it", "we cannot hear it" is the more useful fact, and it is readable at a
+  /// glance without a chip spelling it out.
+  final bool offline;
 
   /// Overrides the proximity tint. Set it only when there is no proximity to
   /// show — a favourite that is out of range — so the badge does not claim a
@@ -141,7 +148,7 @@ class DeviceAvatar extends StatelessWidget {
         color: color.withValues(alpha: 0.14),
       ),
       child: Icon(
-        deviceCategoryIcon(category),
+        offline ? Icons.bluetooth_disabled : deviceCategoryIcon(category),
         color: color,
         size: size * 0.52,
       ),

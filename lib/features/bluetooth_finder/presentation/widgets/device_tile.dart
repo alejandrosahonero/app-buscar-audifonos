@@ -23,7 +23,6 @@ class DeviceTile extends StatelessWidget {
     this.device,
     this.onLongPress,
     this.customName,
-    this.onRename,
     super.key,
   });
 
@@ -43,12 +42,6 @@ class DeviceTile extends StatelessWidget {
   /// can have one — see [FavoriteDevice.customName].
   final String? customName;
 
-  /// Non-null replaces the signal readout with a rename button.
-  ///
-  /// Only offered while the scan is stopped: with a scan running that corner is
-  /// where the live percentage lives, and that is the whole point of the row.
-  final VoidCallback? onRename;
-
   @override
   Widget build(BuildContext context) {
     final DiscoveredDevice? device = this.device;
@@ -64,6 +57,9 @@ class DeviceTile extends StatelessWidget {
         // A proximity tint on a device we cannot hear would be a reading we do
         // not have. Out of range is grey, not "far away".
         color: device == null ? context.colors.outline : null,
+        // Carries the "no signal" state on its own, which is why the row no
+        // longer spends a chip on saying it.
+        offline: device == null,
       ),
       title: Text(
         deviceDisplayName(context, identity, customName: customName),
@@ -84,25 +80,16 @@ class DeviceTile extends StatelessWidget {
               ),
             ),
           const SizedBox(height: AppSpacing.xs),
-          if (device == null)
-            DeviceMetaChip(
-              icon: Icons.bluetooth_disabled,
-              label: context.l10n.finderFavoriteOffline,
-            )
-          else
+          // Nothing at all while it cannot be heard: battery, traits and
+          // "paired" all describe a packet, and there is no packet.
+          if (device != null)
             DeviceMetaChips(identity: identity, isPaired: device.isPaired),
         ],
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          if (onRename != null)
-            IconButton(
-              onPressed: onRename,
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: context.l10n.finderRenameTooltip,
-            )
-          else if (device != null)
+          if (device != null)
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,

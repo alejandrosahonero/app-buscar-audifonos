@@ -164,9 +164,37 @@ void main() {
   ) async {
     await _pumpApp(tester, scanService: _FakeScanService());
 
-    expect(find.text('Buscar Audífonos: Localizador'), findsOneWidget);
+    expect(find.text('Buscar Audífonos'), findsOneWidget);
     expect(find.text('Tap "Scan" to look for devices'), findsOneWidget);
-    expect(find.text('Scan'), findsOneWidget);
+    // Two ways in while the list is empty: the app bar control and the empty
+    // state's own button.
+    expect(find.byIcon(Icons.bluetooth_searching), findsNWidgets(2));
+    expect(find.byType(FloatingActionButton), findsNothing);
+  });
+
+  testWidgets('the empty state button starts the scan and then steps aside', (
+    WidgetTester tester,
+  ) async {
+    final _FakeScanService service = _FakeScanService();
+    await _pumpApp(tester, scanService: service);
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(IconButton),
+            matching: find.byIcon(Icons.bluetooth_searching),
+          )
+          .last,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(service.scanning, isTrue);
+    // The invitation and its text are gone; the app bar keeps the control, now
+    // reading "stop".
+    expect(find.text('Tap "Scan" to look for devices'), findsNothing);
+    expect(find.byIcon(Icons.bluetooth_searching), findsNothing);
+    expect(find.byIcon(Icons.stop), findsOneWidget);
   });
 
   testWidgets('discovered devices are listed strongest first', (
@@ -219,12 +247,11 @@ void main() {
     );
 
     // Same screen the other tests read in English.
-    expect(find.text('Escanear'), findsOneWidget);
     expect(
       find.text('Pulsa "Escanear" para buscar dispositivos'),
       findsOneWidget,
     );
-    expect(find.text('Scan'), findsNothing);
+    expect(find.text('Tap "Scan" to look for devices'), findsNothing);
   });
 
   testWidgets('settings switches the language without a restart', (
@@ -287,7 +314,8 @@ void main() {
     expect(find.text('Favourites'), findsOneWidget);
     expect(find.text('Other devices'), findsOneWidget);
     expect(find.text('Lost buds'), findsOneWidget);
-    expect(find.text('No signal'), findsOneWidget);
+    // No chip spells it out: the crossed-out radio in its avatar is the state.
+    expect(find.byIcon(Icons.bluetooth_disabled), findsOneWidget);
   });
 
   testWidgets('a favourite that is in range is pinned on top, and only once', (
@@ -319,8 +347,9 @@ void main() {
     expect(find.text('No signal'), findsNothing);
   });
 
-  testWidgets('a stopped scan offers renaming a favourite, a running one does '
-      'not', (WidgetTester tester) async {
+  testWidgets('a long press on a favourite renames it', (
+    WidgetTester tester,
+  ) async {
     final _FakeScanService service = _FakeScanService(
       seen: <DiscoveredDevice>[
         _device(id: 'AA:BB:CC:DD:EE:09', name: 'LE_WH-1000XM4', rssi: -55),
@@ -338,11 +367,14 @@ void main() {
       },
     );
 
-    // Stopped: the pencil stands where the signal readout would be.
-    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
-    expect(find.byType(SignalStrengthIcon), findsNothing);
+    // Nothing on the row itself: the actions live behind a long press.
+    expect(find.byIcon(Icons.edit_outlined), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.longPress(find.text('LE_WH-1000XM4'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Remove favourite'), findsOneWidget);
+    await tester.tap(find.text('Edit name'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'Los de correr');
@@ -353,15 +385,41 @@ void main() {
     // The name the user chose replaces the advertised one, it does not join it.
     expect(find.text('LE_WH-1000XM4'), findsNothing);
 
-    // Scanning: the pencil gives the corner back to the reading, and the chosen
-    // name stays.
-    await tester.tap(find.byType(FloatingActionButton));
+    // And it survives a scan, which repaints the row from the live packet.
+    await tester.tap(find.byIcon(Icons.bluetooth_searching).first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byIcon(Icons.edit_outlined), findsNothing);
     expect(find.byType(SignalStrengthIcon), findsOneWidget);
     expect(find.text('Los de correr'), findsOneWidget);
+  });
+
+  testWidgets('the long press menu can also unpin, through its warning', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      scanService: _FakeScanService(),
+      preferences: <String, Object>{
+        'finder_favorite_devices': _storedFavorites(
+          <({String id, String name})>[
+            (id: 'AA:BB:CC:DD:EE:09', name: 'Lost buds'),
+          ],
+        ),
+      },
+    );
+
+    await tester.longPress(find.text('Lost buds'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove favourite'));
+    await tester.pumpAndSettle();
+
+    // The warning about paying for another video is not skipped.
+    expect(find.text('Remove from favourites?'), findsOneWidget);
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lost buds'), findsNothing);
   });
 
   testWidgets('opening the radar with the scan stopped rescans that device', (

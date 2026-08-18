@@ -84,7 +84,7 @@ demo y puede borrarse. Sus integraciones (interstitial tras acción de valor y
 
 | Ruta | Pantalla |
 |---|---|
-| `/` | `ScannerScreen` — favoritos + lista de dispositivos, FAB Escanear/Detener, banner |
+| `/` | `ScannerScreen` — favoritos + lista de dispositivos, botón Escanear/Detener en la AppBar, banner |
 | `/radar/:deviceId` | `RadarScreen` — radar animado + sonido Geiger |
 
 `AppRoutes.radarDeviceIdParam` es el id (MAC en Android, UUID en iOS). El radar
@@ -93,7 +93,7 @@ lectura tiene que seguir cambiando mientras el usuario camina.
 
 **El radar se garantiza su propio escaneo.** Entrar a un dispositivo es pedir una
 lectura fresca *de ese* dispositivo, así que `RadarScreen` arranca el escaneo si
-estaba detenido (con la misma secuencia agrupada de permisos que el FAB) y lo
+estaba detenido (con la misma secuencia agrupada de permisos que el botón) y lo
 vuelve a detener al salir, por las dos salidas: la flecha y el back del sistema.
 
 Decisiones que conviene no deshacer:
@@ -190,6 +190,19 @@ Decisiones que conviene no deshacer:
   rompería el caso de uso principal. A la inversa, marca sola **no** basta
   (`isIdentified`): todos los iPhone de la sala anuncian "Apple" y nada más.
 
+### La pantalla principal
+
+- **El escaneo se controla desde la AppBar** (lupa Bluetooth ⇄ stop). Mientras la
+  lista está vacía hay además un botón grande en el centro, que es donde el
+  usuario está mirando; en cuanto arranca el escaneo desaparece con su texto y
+  solo queda el indicador de carga, porque la invitación ya se aceptó.
+- **La barra de filtros es una sola fila que se desplaza**, no un `Wrap`: una
+  segunda línea de chips empuja la lista hacia abajo justo en los móviles que
+  menos alto tienen. Al tocar un chip se le hace `Scrollable.ensureVisible`
+  **después del frame** — el chip cambia de ancho al ganar o perder su marca de
+  selección, y centrarlo en su posición anterior lo dejaría cortado por esa
+  misma diferencia.
+
 ### Conversión RSSI → cercanía (`domain/proximity.dart`)
 
 Rango útil **-100 dBm → -30 dBm** mapeado a 0-100 %. **No se muestra distancia en
@@ -247,8 +260,10 @@ resueltas en un solo sitio (`proximityColor` en `signal_strength_icon.dart`).
 
 Dispositivos que el usuario ancla arriba del todo de la lista. El caso de uso es
 el del auricular **apagado o fuera de alcance**: el que hay que encontrar es
-justo el que no se oye, así que un favorito **se pinta siempre**, con un chip
-`Sin conexión` cuando no hay lectura.
+justo el que no se oye, así que un favorito **se pinta siempre**. Sin lectura, su
+icono de categoría se sustituye por un Bluetooth tachado y la fila se queda sin
+chips: es el mismo hecho dicho en el sitio donde ya se está mirando, y vuelve al
+icono de siempre en cuanto se le oye.
 
 | Archivo | Qué hace |
 |---|---|
@@ -272,11 +287,11 @@ Decisiones que conviene no deshacer:
   siendo la única fuente de verdad), **sobrevive a un re-pin** (`add` lo relee
   antes de refrescar la descripción) y se borra dejando el campo vacío. Un
   dispositivo no anclado no tiene dónde guardarlo, y por eso no se ofrece.
-- **El lápiz sustituye al indicador de señal, y solo con el escaneo detenido.**
-  Con un escaneo en marcha esa esquina de la fila es la lectura, que es para lo
-  que existe la fila; y detenido no hay lectura que enseñar ahí — el porcentaje
-  congelado sería el mismo engaño que se arregló en el radar (§1.1). El
-  intercambio en el mismo sitio es lo que lo hace evidente sin explicarlo.
+- **Las dos acciones viven tras una pulsación larga**, en un `SimpleDialog`:
+  «Editar nombre» y «Quitar favorito», y la segunda entra en el aviso de siempre
+  (volver a anclarlo cuesta otro vídeo). La fila no gasta espacio en controles
+  que se usan una vez cada mucho, y una acción destructiva pegada al área que se
+  toca para abrir el radar es como se pierde un favorito sin querer.
 - **El radar titula con el nombre elegido** (`favoriteCustomNameProvider`, en
   `watch`): si al abrirlo volviera al nombre anunciado, renombrar no habría
   servido para nada.
@@ -395,12 +410,14 @@ En Ajustes hay una fila **"Opciones de privacidad"** que reabre el formulario, v
 **Banner.** `AdaptiveBannerAd` (anchored adaptive, no 320x50 fijo) se coloca desde `BaseScreen` **debajo** del contenido, nunca superpuesto. Si no hay anuncio o el usuario es premium ocupa **cero** altura.
 
 > ⚠️ **El banner viaja en `bottomNavigationBar`, no en un `Column` bajo el body.**
-> El `FloatingActionButton` se posiciona a partir de la geometría del `Scaffold`,
+> Un `FloatingActionButton` se posiciona a partir de la geometría del `Scaffold`,
 > y esa geometría **solo** descuenta la barra inferior. Con el banner dentro del
-> body, el FAB flotaba **encima** del anuncio: escondía el botón de Escanear y
-> dejaba el dedo a un resbalón de un clic accidental — que es exactamente lo que
-> suspende cuentas de AdMob. Si algún día hay `bottomBar`, va debajo del banner
-> dentro del mismo slot.
+> body, el FAB flotaba **encima** del anuncio y dejaba el dedo a un resbalón de
+> un clic accidental — que es exactamente lo que suspende cuentas de AdMob.
+> `ScannerScreen` ya no tiene FAB (el control de escaneo está en la AppBar,
+> junto a los resultados y lejos del anuncio), pero la regla sigue en pie para
+> cualquier pantalla que añada uno. Si algún día hay `bottomBar`, va debajo del
+> banner dentro del mismo slot.
 Poner `showBanner: false` en pantallas con controles densos, formularios, onboarding o acciones destructivas cerca del borde inferior (así están `SettingsScreen` y `PaywallScreen`).
 
 **Mediación:** no activarla en el lanzamiento. A partir de ~10k usuarios activos, 2–3 redes.
