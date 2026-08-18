@@ -167,6 +167,7 @@ class DeviceMetaChips extends StatelessWidget {
     this.isPaired = false,
     this.maxChips = 3,
     this.alignment = WrapAlignment.start,
+    this.gapAbove = 0,
     super.key,
   });
 
@@ -175,16 +176,26 @@ class DeviceMetaChips extends StatelessWidget {
   final int maxChips;
   final WrapAlignment alignment;
 
+  /// Space between the chips and whatever sits above them.
+  ///
+  /// It belongs here rather than in the caller because it has to vanish with
+  /// the chips: a device with nothing to show must take up no room at all, gap
+  /// included, or the line above it ends up floating over an empty strip.
+  final double gapAbove;
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> chips = _chipsFor(context).take(maxChips).toList();
     if (chips.isEmpty) return const SizedBox.shrink();
 
-    return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      alignment: alignment,
-      children: chips,
+    return Padding(
+      padding: EdgeInsets.only(top: gapAbove),
+      child: Wrap(
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        alignment: alignment,
+        children: chips,
+      ),
     );
   }
 
@@ -254,18 +265,6 @@ class DeviceMetaChips extends StatelessWidget {
 ///
 /// Deliberately not a Material `Chip`: those carry a 32 dp minimum height and
 /// their own margins, which is half a list row for two words of text.
-/// Height of exactly one row of [DeviceMetaChip], text scaling included.
-///
-/// The list uses it to reserve the chip line whether or not there are chips to
-/// put in it: a row that shrinks when a device goes quiet makes the whole list
-/// jump every time one stops advertising.
-///
-/// 22 is the chip's own geometry — 3 px of padding above and below a 16 px
-/// line — and it is here, next to the widget it measures, so the two cannot
-/// drift apart.
-double deviceMetaChipHeight(BuildContext context) =>
-    MediaQuery.textScalerOf(context).scale(22);
-
 class DeviceMetaChip extends StatelessWidget {
   const DeviceMetaChip({
     required this.icon,

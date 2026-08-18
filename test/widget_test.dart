@@ -9,6 +9,8 @@ import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_dev
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/favorite_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/screens/radar_screen.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_tile.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/signal_strength_icon.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
 import 'package:buscar_audifonos/services/billing/premium_state.dart';
@@ -143,6 +145,20 @@ String _storedFavorites(
   ]);
 }
 
+/// The name each row is showing, top to bottom.
+///
+/// A row is a [DeviceTile], not a `ListTile`: the tile lays its own text out so
+/// that it can hug its content and stay centred against the avatar. The name is
+/// its first `Text`.
+Iterable<String> _rowNames(WidgetTester tester) {
+  return find.byType(DeviceTile).evaluate().map((Element row) {
+    final Finder name = find
+        .descendant(of: find.byWidget(row.widget), matching: find.byType(Text))
+        .first;
+    return tester.widget<Text>(name).data!;
+  });
+}
+
 Future<void> _pumpApp(
   WidgetTester tester, {
   required BluetoothScanService scanService,
@@ -217,9 +233,7 @@ void main() {
       ),
     );
 
-    final Iterable<String> titles = tester
-        .widgetList<ListTile>(find.byType(ListTile))
-        .map((ListTile tile) => (tile.title! as Text).data!);
+    final Iterable<String> titles = _rowNames(tester);
 
     expect(titles, <String>['Near buds', 'Far buds']);
   });
@@ -329,7 +343,7 @@ void main() {
     expect(find.byType(SignalStrengthIcon), findsOneWidget);
   });
 
-  testWidgets('a row keeps its height whether or not it has chips', (
+  testWidgets('a row hugs what it has to say, centred on its icon', (
     WidgetTester tester,
   ) async {
     await _pumpApp(
@@ -346,8 +360,7 @@ void main() {
         ],
       ),
       preferences: <String, Object>{
-        // One favourite with a brand line and one without: the pair that used
-        // to render at two different heights.
+        // Two favourites, one with a brand line and one without.
         'finder_favorite_devices': jsonEncode(<Map<String, Object?>>[
           const FavoriteDevice(
             id: 'AA:BB:CC:DD:EE:08',
@@ -371,14 +384,56 @@ void main() {
     expect(find.text('80%'), findsOneWidget);
     expect(find.text('Sony'), findsOneWidget);
 
-    // Three rows, three states — no brand line, a brand line, and a live
-    // reading with a chip — and one height between them.
-    final Iterable<double> heights = tester
-        .widgetList<ListTile>(find.byType(ListTile))
-        .map((ListTile tile) => tester.getSize(find.byWidget(tile)).height);
+    // Nothing is held open for a line a device does not have: the row without a
+    // brand is never taller than the one with it.
+    final double plain = tester.getSize(find.byType(DeviceTile).at(0)).height;
+    final double branded = tester.getSize(find.byType(DeviceTile).at(1)).height;
+    expect(plain, lessThanOrEqualTo(branded));
 
-    expect(heights.length, 3);
-    expect(heights.toSet(), hasLength(1));
+    // The speaker has a chip and no brand line, so the chip sits straight under
+    // its name rather than after an empty strip.
+    final Finder speaker = find.byType(DeviceTile).at(2);
+    final double nameBottom = tester
+        .getRect(
+          find.descendant(of: speaker, matching: find.byType(Text)).first,
+        )
+        .bottom;
+    final double chipTop = tester
+        .getRect(
+          find.descendant(of: speaker, matching: find.byType(DeviceMetaChip)),
+        )
+        .top;
+    expect(chipTop - nameBottom, lessThanOrEqualTo(6));
+
+    // And on each row the text block and the icon share a centre line, so the
+    // name never rides above the icon.
+    for (int index = 0; index < 3; index++) {
+      final Finder row = find.byType(DeviceTile).at(index);
+      final double rowCentre = tester.getCenter(row).dy;
+      final double iconCentre = tester
+          .getCenter(
+            find.descendant(of: row, matching: find.byType(DeviceAvatar)),
+          )
+          .dy;
+      final double nameCentre = tester
+          .getCenter(
+            find.descendant(of: row, matching: find.byType(Text)).first,
+          )
+          .dy;
+      // `.first` is the text block; the second Column, when there is one, is
+      // the signal readout on the other side of the row.
+      final double textBlockCentre = tester
+          .getCenter(
+            find.descendant(of: row, matching: find.byType(Column)).first,
+          )
+          .dy;
+
+      expect(iconCentre, closeTo(rowCentre, 0.5));
+      expect(textBlockCentre, closeTo(rowCentre, 0.5));
+      // A row with one line only has its name centred; one with more lines has
+      // the name above the centre, which is what a text block does.
+      expect(nameCentre, lessThanOrEqualTo(rowCentre + 0.5));
+    }
   });
 
   testWidgets('stopping the scan takes the readings away with it', (
@@ -429,9 +484,7 @@ void main() {
       },
     );
 
-    final Iterable<String> titles = tester
-        .widgetList<ListTile>(find.byType(ListTile))
-        .map((ListTile tile) => (tile.title! as Text).data!);
+    final Iterable<String> titles = _rowNames(tester);
 
     expect(titles, <String>['My buds', 'Near speaker']);
     // Listed once, not twice: the favourites section owns it.

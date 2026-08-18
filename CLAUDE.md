@@ -203,19 +203,22 @@ Decisiones que conviene no deshacer:
   §1.1) y pierden el porcentaje, el indicador de señal y los chips. Es la misma
   regla del radar aplicada a la lista: **lo que un dispositivo *es* sobrevive al
   silencio; lo que se *oye* de él, no.**
-- **Todas las filas miden lo mismo (82 dp), tengan o no marca y chips.** Las dos
-  líneas bajo el título se reservan siempre: la de «tipo · marca» se pinta con
-  cadena vacía cuando no hay nada que decir, y la de chips con
-  `deviceMetaChipHeight`. Con el contenido igualado, la altura la fija el propio
-  contenido (`isThreeLine: false`, `minTileHeight: 0`,
-  `minVerticalPadding: AppSpacing.sm`) en vez de redondear al escalón de tres
-  líneas de Material, que era de dónde salían los 88 dp.
+- **`DeviceTile` no usa `ListTile`.** Es un `InkWell` con un `Row` centrado:
+  icono, bloque de texto y lectura comparten una única línea central, y la fila
+  mide lo que tenga que decir ese dispositivo (~60 dp sin marca ni chips, más
+  alta cuando los tiene). **Nada se reserva**: sin marca, los chips van pegados
+  al nombre.
 
-  > ⚠️ Reservar el **alto** no basta: `ListTile` coloca título y subtítulo a
-  > partir de sus **líneas base**, y un subtítulo sin texto dentro no tiene
-  > ninguna. El fallback (su alto completo) los junta hasta que el tile se pasa
-  > solo a su *layout* compacto, y ahí estaba la fila más baja. Por eso los
-  > huecos se rellenan con `Text('')`, no con un `SizedBox`.
+  > ⚠️ Con `ListTile` esto no se puede. Coloca título y subtítulo desde sus
+  > **líneas base** contra desplazamientos fijos, así que (a) empujaba el nombre
+  > hacia arriba, (b) obligaba a rellenar los huecos con `Text('')` para que el
+  > subtítulo tuviera línea base —si no, se pasaba solo a su *layout* compacto y
+  > esa fila salía más baja que las demás— y (c) redondeaba al escalón de tres
+  > líneas (88 dp) aunque sobrara sitio. Los tres síntomas eran el mismo widget.
+
+- **Los chips se cortan a dos** (`maxChips: 2` en la lista) y su separación
+  superior viaja dentro de `DeviceMetaChips` (`gapAbove`): si el hueco lo
+  pusiera la fila, un dispositivo sin chips dejaría el aire igualmente.
 
 - **La barra de filtros es una sola fila que se desplaza**, no un `Wrap`: una
   segunda línea de chips empuja la lista hacia abajo justo en los móviles que

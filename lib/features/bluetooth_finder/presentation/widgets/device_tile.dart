@@ -47,92 +47,99 @@ class DeviceTile extends StatelessWidget {
     final DiscoveredDevice? device = this.device;
     final String? summary = deviceSummaryLine(context, identity);
 
-    return ListTile(
+    return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
-      // The height is the row's own content plus its padding, not one of
-      // Material's one/two/three-line buckets. Both lines under the title are
-      // reserved below, so that content measures the same on every row — and
-      // it comes out shorter than the three-line bucket the rows used to be
-      // rounded up to.
-      isThreeLine: false,
-      minTileHeight: 0,
-      minVerticalPadding: AppSpacing.sm,
-      leading: DeviceAvatar(
-        category: identity.category,
-        band: device?.band ?? ProximityBand.far,
-        // A proximity tint on a device we cannot hear would be a reading we do
-        // not have. Out of range is grey, not "far away".
-        color: device == null ? context.colors.outline : null,
-        // Carries the "no signal" state on its own, which is why the row no
-        // longer spends a chip on saying it.
-        offline: device == null,
-      ),
-      title: Text(
-        deviceDisplayName(context, identity, customName: customName),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: context.texts.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          // Always one line, even when the advertisement named neither the kind
-          // nor the brand: an empty string still occupies a line box and still
-          // has a baseline, which is what `ListTile` measures the subtitle by.
-          // Half the favourites say "Auriculares · Sony" and half say nothing,
-          // and the two must not be different heights.
-          Text(
-            summary ?? '',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.texts.bodySmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        // Everything on the row shares one centre line. `ListTile` cannot do
+        // this: it positions the title and the subtitle from their text
+        // baselines against fixed offsets, which is what was pushing the name
+        // upwards and what forced the empty reserved lines — a row is not a
+        // fixed number of lines here, it is however much this device has to
+        // say.
+        child: Row(
+          children: <Widget>[
+            DeviceAvatar(
+              category: identity.category,
+              band: device?.band ?? ProximityBand.far,
+              // A proximity tint on a device we cannot hear would be a reading
+              // we do not have. Out of range is grey, not "far away".
+              color: device == null ? context.colors.outline : null,
+              // Carries the "no signal" state on its own, which is why the row
+              // no longer spends a chip on saying it.
+              offline: device == null,
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // Same rule for the chips: exactly one chip tall whether or not there
-          // is anything to put in it, so a device going quiet does not resize
-          // its row. Anything past the first line is clipped rather than
-          // allowed to grow it; the chips are ordered most useful first.
-          SizedBox(
-            height: deviceMetaChipHeight(context),
-            child: ClipRect(
-              child: Align(
-                alignment: AlignmentDirectional.topStart,
-                // Nothing readable while it cannot be heard: battery, traits
-                // and "paired" all describe a packet, and there is no packet.
-                child: device == null
-                    ? const SizedBox.shrink()
-                    : DeviceMetaChips(
-                        identity: identity,
-                        isPaired: device.isPaired,
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    deviceDisplayName(
+                      context,
+                      identity,
+                      customName: customName,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.texts.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  // Only when the advertisement actually named a kind or a
+                  // brand. Nothing is reserved for it: with no brand to show,
+                  // the chips sit straight under the name.
+                  if (summary != null)
+                    Text(
+                      summary,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.texts.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
                       ),
+                    ),
+                  // Same rule, and the gap travels with them: battery, traits
+                  // and "paired" all describe a packet, so a device that is not
+                  // being heard has none and gives the space back.
+                  if (device != null)
+                    DeviceMetaChips(
+                      identity: identity,
+                      isPaired: device.isPaired,
+                      // Two, not three: a third chip wraps to a second line on
+                      // a narrow phone, and that line would be the one row in
+                      // the list that is taller than the rest.
+                      maxChips: 2,
+                      gapAbove: AppSpacing.xs,
+                    ),
+                ],
               ),
             ),
-          ),
-        ],
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          if (device != null)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: <Widget>[
-                Text(
-                  '${device.closenessPercent} %',
-                  style: context.texts.titleMedium?.copyWith(
-                    color: proximityColor(context, device.band),
+            const SizedBox(width: AppSpacing.sm),
+            if (device != null) ...<Widget>[
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Text(
+                    '${device.closenessPercent} %',
+                    style: context.texts.titleMedium?.copyWith(
+                      color: proximityColor(context, device.band),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                SignalStrengthIcon(closeness: device.closeness),
-              ],
-            ),
-          const Icon(Icons.chevron_right),
-        ],
+                  const SizedBox(height: AppSpacing.xs),
+                  SignalStrengthIcon(closeness: device.closeness),
+                ],
+              ),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+            Icon(Icons.chevron_right, color: context.colors.outline),
+          ],
+        ),
       ),
     );
   }
