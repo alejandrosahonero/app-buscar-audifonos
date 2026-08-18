@@ -429,12 +429,12 @@ class _ScanInvitation extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            // Sized well past the 48 dp minimum: it is the primary action of an
-            // otherwise empty screen.
+            // Comfortably past the 48 dp minimum without dominating the
+            // screen: it is the primary action here, not the subject.
             IconButton.filled(
               onPressed: onPressed,
-              iconSize: 56,
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              iconSize: 32,
+              padding: const EdgeInsets.all(AppSpacing.md),
               icon: const Icon(Icons.bluetooth_searching),
               tooltip: context.l10n.finderScanStart,
             ),

@@ -115,11 +115,13 @@ DiscoveredDevice _device({
   required String id,
   required String name,
   required int rssi,
+  int? battery,
 }) => DiscoveredDevice.firstSeen(
   id: id,
   // A bare advertised name is all these list tests need: an empty one is
   // exactly the "we could not identify this at all" case the filter drops.
-  identity: DeviceIdentity(advertisedName: name),
+  // `battery` is there for the tests that need the row to grow a chip.
+  identity: DeviceIdentity(advertisedName: name, batteryPercent: battery),
   rssi: rssi,
   lastSeen: DateTime(2026),
 );
@@ -165,7 +167,7 @@ void main() {
     await _pumpApp(tester, scanService: _FakeScanService());
 
     expect(find.text('Buscar Audífonos'), findsOneWidget);
-    expect(find.text('Tap "Scan" to look for devices'), findsOneWidget);
+    expect(find.text('Tap to look for devices'), findsOneWidget);
     // Two ways in while the list is empty: the app bar control and the empty
     // state's own button.
     expect(find.byIcon(Icons.bluetooth_searching), findsNWidgets(2));
@@ -192,7 +194,7 @@ void main() {
     expect(service.scanning, isTrue);
     // The invitation and its text are gone; the app bar keeps the control, now
     // reading "stop".
-    expect(find.text('Tap "Scan" to look for devices'), findsNothing);
+    expect(find.text('Tap to look for devices'), findsNothing);
     expect(find.byIcon(Icons.bluetooth_searching), findsNothing);
     expect(find.byIcon(Icons.stop), findsOneWidget);
   });
@@ -247,11 +249,8 @@ void main() {
     );
 
     // Same screen the other tests read in English.
-    expect(
-      find.text('Pulsa "Escanear" para buscar dispositivos'),
-      findsOneWidget,
-    );
-    expect(find.text('Tap "Scan" to look for devices'), findsNothing);
+    expect(find.text('Pulsa para buscar dispositivos'), findsOneWidget);
+    expect(find.text('Tap to look for devices'), findsNothing);
   });
 
   testWidgets('settings switches the language without a restart', (
@@ -323,6 +322,45 @@ void main() {
     expect(find.byIcon(Icons.bluetooth_disabled), findsOneWidget);
     // And the one that is being heard keeps its reading.
     expect(find.byType(SignalStrengthIcon), findsOneWidget);
+  });
+
+  testWidgets('a row keeps its height whether or not it has chips', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      scanService: _FakeScanService(
+        seen: <DiscoveredDevice>[
+          // Heard, and with a battery level to put in a chip.
+          _device(
+            id: 'AA:BB:CC:DD:EE:01',
+            name: 'Some speaker',
+            rssi: -50,
+            battery: 80,
+          ),
+        ],
+      ),
+      preferences: <String, Object>{
+        'finder_favorite_devices': _storedFavorites(
+          <({String id, String name})>[
+            (id: 'AA:BB:CC:DD:EE:09', name: 'Lost buds'),
+          ],
+        ),
+      },
+    );
+
+    await tester.tap(find.byIcon(Icons.bluetooth_searching).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('80%'), findsOneWidget);
+
+    // The silent favourite and the chatty speaker measure the same: the chip
+    // line is reserved either way, so the list does not jump as devices come
+    // and go.
+    final double offline = tester.getSize(find.byType(ListTile).first).height;
+    final double live = tester.getSize(find.byType(ListTile).last).height;
+    expect(offline, live);
   });
 
   testWidgets('stopping the scan takes the readings away with it', (

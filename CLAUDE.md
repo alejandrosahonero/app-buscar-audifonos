@@ -203,6 +203,17 @@ Decisiones que conviene no deshacer:
   §1.1) y pierden el porcentaje, el indicador de señal y los chips. Es la misma
   regla del radar aplicada a la lista: **lo que un dispositivo *es* sobrevive al
   silencio; lo que se *oye* de él, no.**
+- **Todas las filas miden lo mismo, tengan chips o no.** La línea de chips se
+  reserva siempre (`deviceMetaChipHeight`), y cuando no hay nada que poner ahí
+  va un `DeviceMetaChip` sin tinta, **no** un hueco vacío.
+
+  > ⚠️ La razón no es el alto del hueco, es la **línea base**: `ListTile` coloca
+  > título y subtítulo a partir de sus baselines, y un subtítulo sin texto no
+  > tiene ninguna. El fallback (su alto completo) los junta hasta que el tile se
+  > pasa a su *layout* compacto —`2·padding + título + subtítulo` en vez de los
+  > 88 dp— y esa era exactamente la tarjeta más baja que aparecía en las filas
+  > sin chips. Un `SizedBox` de la misma altura **no** lo arregla.
+
 - **La barra de filtros es una sola fila que se desplaza**, no un `Wrap`: una
   segunda línea de chips empuja la lista hacia abajo justo en los móviles que
   menos alto tienen. Al tocar un chip se le hace `Scrollable.ensureVisible`

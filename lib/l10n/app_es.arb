@@ -67,7 +67,7 @@
   "finderScanStop": "Detener",
   "finderScanningTitle": "Buscando dispositivos…",
   "finderScanningMessage": "Mantén el móvil en la mano y muévete despacio por la habitación.",
-  "finderEmptyTitle": "Pulsa \"Escanear\" para buscar dispositivos",
+  "finderEmptyTitle": "Pulsa para buscar dispositivos",
   "@finderEmptyTitle": {
     "description": "Estado vacío de la lista mientras no se ha escaneado todavía"
   },

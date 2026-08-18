@@ -80,10 +80,41 @@ class DeviceTile extends StatelessWidget {
               ),
             ),
           const SizedBox(height: AppSpacing.xs),
-          // Nothing at all while it cannot be heard: battery, traits and
-          // "paired" all describe a packet, and there is no packet.
-          if (device != null)
-            DeviceMetaChips(identity: identity, isPaired: device.isPaired),
+          // The chip line is always exactly one chip tall, even when there is
+          // nothing to put in it: a row that shrinks the moment its device goes
+          // quiet makes the whole list jump. Anything past the first line is
+          // clipped rather than allowed to grow the row; the chips are already
+          // ordered most useful first.
+          //
+          // The placeholder is a real chip with the ink taken off it, not an
+          // empty box, and that matters more than it looks: `ListTile` lays the
+          // title and subtitle out from their **baselines**, and a subtitle
+          // with no text in it has none. Falling back to its full height pulls
+          // the pair together until the tile gives up and switches to its
+          // compact layout — which is exactly the shorter card that showed up
+          // on the rows with no chips.
+          SizedBox(
+            height: deviceMetaChipHeight(context),
+            child: ClipRect(
+              child: Align(
+                alignment: AlignmentDirectional.topStart,
+                // Nothing readable while it cannot be heard: battery, traits
+                // and "paired" all describe a packet, and there is no packet.
+                child: device == null
+                    ? const Visibility(
+                        visible: false,
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: DeviceMetaChip(icon: Icons.bluetooth, label: ''),
+                      )
+                    : DeviceMetaChips(
+                        identity: identity,
+                        isPaired: device.isPaired,
+                      ),
+              ),
+            ),
+          ),
         ],
       ),
       trailing: Row(

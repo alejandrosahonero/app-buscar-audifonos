@@ -29,7 +29,7 @@
   "finderScanStop": "Stop",
   "finderScanningTitle": "Looking for devices…",
   "finderScanningMessage": "Hold your phone and walk slowly around the room.",
-  "finderEmptyTitle": "Tap \"Scan\" to look for devices",
+  "finderEmptyTitle": "Tap to look for devices",
   "finderFavoritesTitle": "Favourites",
   "finderOtherDevicesTitle": "Other devices",
   "finderFavoriteActions": "{name} options",

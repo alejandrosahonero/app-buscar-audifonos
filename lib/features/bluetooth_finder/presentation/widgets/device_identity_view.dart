@@ -254,6 +254,18 @@ class DeviceMetaChips extends StatelessWidget {
 ///
 /// Deliberately not a Material `Chip`: those carry a 32 dp minimum height and
 /// their own margins, which is half a list row for two words of text.
+/// Height of exactly one row of [DeviceMetaChip], text scaling included.
+///
+/// The list uses it to reserve the chip line whether or not there are chips to
+/// put in it: a row that shrinks when a device goes quiet makes the whole list
+/// jump every time one stops advertising.
+///
+/// 22 is the chip's own geometry — 3 px of padding above and below a 16 px
+/// line — and it is here, next to the widget it measures, so the two cannot
+/// drift apart.
+double deviceMetaChipHeight(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(22);
+
 class DeviceMetaChip extends StatelessWidget {
   const DeviceMetaChip({
     required this.icon,
