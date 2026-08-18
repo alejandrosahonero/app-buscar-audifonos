@@ -35,10 +35,19 @@ class FavoriteDeviceTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final DiscoveredDevice? live = ref.watch(deviceByIdProvider(favorite.id));
-    final DeviceIdentity identity = live == null
+    // With the scan stopped the stream still holds the last packet it received.
+    // What it says the device *is* stays true — nothing changes model when it
+    // goes quiet — but the reading does not: it is a photograph of the moment
+    // Stop was pressed. The identity is kept, the reading is dropped.
+    final bool isScanning = ref.watch(isScanningProvider).value ?? false;
+    final DiscoveredDevice? lastSeen = ref.watch(
+      deviceByIdProvider(favorite.id),
+    );
+    final DiscoveredDevice? live = isScanning ? lastSeen : null;
+    final DeviceIdentity identity = lastSeen == null
         ? favorite.identity
-        : favorite.identity.mergedWith(live.identity);
+        : favorite.identity.mergedWith(lastSeen.identity);
+
     return DeviceTile(
       identity: identity,
       customName: favorite.customName,

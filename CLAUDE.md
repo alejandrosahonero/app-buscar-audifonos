@@ -196,6 +196,13 @@ Decisiones que conviene no deshacer:
   lista está vacía hay además un botón grande en el centro, que es donde el
   usuario está mirando; en cuanto arranca el escaneo desaparece con su texto y
   solo queda el indicador de carga, porque la invitación ya se aceptó.
+- **Con el escaneo detenido no hay lectura en ninguna fila.** El servicio sigue
+  reemitiendo el último paquete —eso es lo que evita que la lista se vacíe al
+  volver del radar—, pero es de antes de pulsar Detener: las filas se quedan
+  (siguen siendo la forma de reabrir lo que acabas de ver, y abrirlo re-escanea,
+  §1.1) y pierden el porcentaje, el indicador de señal y los chips. Es la misma
+  regla del radar aplicada a la lista: **lo que un dispositivo *es* sobrevive al
+  silencio; lo que se *oye* de él, no.**
 - **La barra de filtros es una sola fila que se desplaza**, no un `Wrap`: una
   segunda línea de chips empuja la lista hacia abajo justo en los móviles que
   menos alto tienen. Al tocar un chip se le hace `Scrollable.ensureVisible`

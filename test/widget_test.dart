@@ -311,10 +311,44 @@ void main() {
       },
     );
 
+    // Scanning, so "out of range" means this device only, not the whole list.
+    await tester.tap(find.byIcon(Icons.bluetooth_searching).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
     expect(find.text('Favourites'), findsOneWidget);
     expect(find.text('Other devices'), findsOneWidget);
     expect(find.text('Lost buds'), findsOneWidget);
     // No chip spells it out: the crossed-out radio in its avatar is the state.
+    expect(find.byIcon(Icons.bluetooth_disabled), findsOneWidget);
+    // And the one that is being heard keeps its reading.
+    expect(find.byType(SignalStrengthIcon), findsOneWidget);
+  });
+
+  testWidgets('stopping the scan takes the readings away with it', (
+    WidgetTester tester,
+  ) async {
+    final _FakeScanService service = _FakeScanService(
+      seen: <DiscoveredDevice>[
+        _device(id: 'AA:BB:CC:DD:EE:01', name: 'Some speaker', rssi: -50),
+      ],
+    );
+    await _pumpApp(tester, scanService: service);
+
+    await tester.tap(find.byIcon(Icons.bluetooth_searching).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(SignalStrengthIcon), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.stop));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // The row survives — it is still how the user reopens what they just saw —
+    // but nothing on it claims a signal that is no longer being received.
+    expect(find.text('Some speaker'), findsOneWidget);
+    expect(find.byType(SignalStrengthIcon), findsNothing);
     expect(find.byIcon(Icons.bluetooth_disabled), findsOneWidget);
   });
 
@@ -344,7 +378,8 @@ void main() {
         .map((ListTile tile) => (tile.title! as Text).data!);
 
     expect(titles, <String>['My buds', 'Near speaker']);
-    expect(find.text('No signal'), findsNothing);
+    // Listed once, not twice: the favourites section owns it.
+    expect(find.text('My buds'), findsOneWidget);
   });
 
   testWidgets('a long press on a favourite renames it', (

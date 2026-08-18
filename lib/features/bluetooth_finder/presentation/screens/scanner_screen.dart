@@ -523,7 +523,11 @@ class _ScannerList extends StatelessWidget {
                   // each other.
                   key: ValueKey<String>(device.id),
                   identity: device.identity,
-                  device: device,
+                  // The rows outlive the scan so the user can still open what
+                  // they just saw — that is what re-scans it — but the reading
+                  // does not: a stopped scan produces no signal, and a frozen
+                  // percentage next to it would claim otherwise.
+                  device: isScanning ? device : null,
                   onTap: () => onOpen(device.id),
                 );
               },
