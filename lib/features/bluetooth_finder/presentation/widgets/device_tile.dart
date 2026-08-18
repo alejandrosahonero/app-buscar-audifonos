@@ -22,6 +22,8 @@ class DeviceTile extends StatelessWidget {
     required this.onTap,
     this.device,
     this.onLongPress,
+    this.customName,
+    this.onRename,
     super.key,
   });
 
@@ -36,6 +38,16 @@ class DeviceTile extends StatelessWidget {
 
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+
+  /// The name the user gave this device, if they gave it one. Only favourites
+  /// can have one — see [FavoriteDevice.customName].
+  final String? customName;
+
+  /// Non-null replaces the signal readout with a rename button.
+  ///
+  /// Only offered while the scan is stopped: with a scan running that corner is
+  /// where the live percentage lives, and that is the whole point of the row.
+  final VoidCallback? onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +66,7 @@ class DeviceTile extends StatelessWidget {
         color: device == null ? context.colors.outline : null,
       ),
       title: Text(
-        deviceDisplayName(context, identity),
+        deviceDisplayName(context, identity, customName: customName),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: context.texts.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
@@ -84,7 +96,13 @@ class DeviceTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          if (device != null)
+          if (onRename != null)
+            IconButton(
+              onPressed: onRename,
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: context.l10n.finderRenameTooltip,
+            )
+          else if (device != null)
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,

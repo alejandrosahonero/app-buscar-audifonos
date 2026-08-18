@@ -55,5 +55,7 @@ abstract final class AdConfig {
 
   /// Device ids that should always receive test ads, even in a release build.
   /// The id is printed in logcat the first time the SDK requests an ad.
-  static const List<String> testDeviceIds = <String>[];
+  static const List<String> testDeviceIds = <String>[
+    'AB9585851B3406094C26F2A9B859BC16',
+  ];
 }

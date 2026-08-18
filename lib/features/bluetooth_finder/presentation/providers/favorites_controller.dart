@@ -31,6 +31,19 @@ final Provider<Set<String>> favoriteDeviceIdsProvider = Provider<Set<String>>((
       .toSet();
 });
 
+/// The name the user gave this device, or `null` when they gave it none — or
+/// when it is not a favourite at all, which is the same thing here: only
+/// favourites have somewhere to keep a name.
+final ProviderFamily<String?, String> favoriteCustomNameProvider =
+    Provider.family<String?, String>((Ref ref, String id) {
+      for (final FavoriteDevice favorite in ref.watch(
+        favoriteDevicesProvider,
+      )) {
+        if (favorite.id == id) return favorite.customName;
+      }
+      return null;
+    }, isAutoDispose: true);
+
 final ProviderFamily<bool, String> isFavoriteProvider =
     Provider.family<bool, String>(
       (Ref ref, String id) => ref.watch(favoriteDeviceIdsProvider).contains(id),
@@ -72,12 +85,38 @@ class FavoriteDevicesController extends Notifier<List<FavoriteDevice>> {
   /// pinned — a device that was anonymous when it was first saved may have
   /// advertised its real name since.
   Future<void> add(DiscoveredDevice device) {
-    final FavoriteDevice favorite = FavoriteDevice.fromDiscovered(device);
+    // The custom name is the one thing here the user wrote themselves, so a
+    // refresh of the advertised description must not take it away.
+    final FavoriteDevice favorite = FavoriteDevice.fromDiscovered(
+      device,
+      customName: _customNameOf(device.id),
+    );
     return _write(<FavoriteDevice>[
       for (final FavoriteDevice existing in state)
         if (existing.id != favorite.id) existing,
       favorite,
     ]);
+  }
+
+  /// Renames a pinned device. An empty [name] goes back to the advertised one.
+  ///
+  /// A no-op for a device that is not pinned: the name is stored on the
+  /// favourite, so there is nowhere to keep it otherwise.
+  Future<void> rename(String id, String? name) {
+    if (!state.any((FavoriteDevice favorite) => favorite.id == id)) {
+      return Future<void>.value();
+    }
+    return _write(<FavoriteDevice>[
+      for (final FavoriteDevice favorite in state)
+        if (favorite.id == id) favorite.renamedTo(name) else favorite,
+    ]);
+  }
+
+  String? _customNameOf(String id) {
+    for (final FavoriteDevice favorite in state) {
+      if (favorite.id == id) return favorite.customName;
+    }
+    return null;
   }
 
   Future<void> remove(String id) {

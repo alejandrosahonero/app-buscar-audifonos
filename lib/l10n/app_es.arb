@@ -67,11 +67,9 @@
   "finderScanStop": "Detener",
   "finderScanningTitle": "Buscando dispositivos…",
   "finderScanningMessage": "Mantén el móvil en la mano y muévete despacio por la habitación.",
-  "finderEmptyTitle": "Ningún dispositivo a la vista",
-  "finderEmptyMessage": "Pulsa Escanear para buscar audífonos y dispositivos Bluetooth cercanos.",
-  "finderScanHint": "Pulsa el botón Escanear para empezar a buscar",
-  "@finderScanHint": {
-    "description": "Aviso con flecha que señala el botón flotante mientras no se está escaneando"
+  "finderEmptyTitle": "Pulsa \"Escanear\" para buscar dispositivos",
+  "@finderEmptyTitle": {
+    "description": "Estado vacío de la lista mientras no se ha escaneado todavía"
   },
   "finderFavoritesTitle": "Favoritos",
   "finderOtherDevicesTitle": "Otros dispositivos",
@@ -89,6 +87,15 @@
     }
   },
   "finderFavoriteRemoved": "Eliminado de favoritos.",
+  "finderRenameTooltip": "Cambiar el nombre",
+  "@finderRenameTooltip": {
+    "description": "Botón de editar que sustituye a la señal en un favorito mientras el escaneo está detenido"
+  },
+  "finderRenameTitle": "Cambiar el nombre",
+  "finderRenameFieldLabel": "Nombre",
+  "finderRenameHelp": "Déjalo vacío para volver al nombre que anuncia el dispositivo.",
+  "finderRenameSave": "Guardar",
+  "finderRenamed": "Nombre actualizado.",
   "finderUnnamedDevice": "Dispositivo Bluetooth",
   "@finderUnnamedDevice": {
     "description": "Nombre de un dispositivo del que no sabemos ni la marca ni el tipo. También es la etiqueta de la categoría desconocida."
@@ -141,14 +148,9 @@
   "finderTraitLeAudio": "LE Audio",
 
   "finderFilterIdentifiedOnly": "Solo identificados",
-  "finderFilterStrongSignal": "Más de {dbm} dBm",
+  "finderFilterStrongSignal": "Solo señal cercana",
   "@finderFilterStrongSignal": {
-    "description": "Chip de filtro que oculta las señales muy débiles",
-    "placeholders": {
-      "dbm": {
-        "type": "int"
-      }
-    }
+    "description": "Chip de filtro que oculta las señales muy débiles"
   },
   "finderHiddenCount": "{count, plural, =1{1 oculto} other{{count} ocultos}}",
   "@finderHiddenCount": {
@@ -181,8 +183,13 @@
   "radarBandNear": "Cerca",
   "radarBandVeryNear": "Muy cerca",
   "radarHint": "Camina despacio: si el porcentaje sube, vas bien.",
-  "radarSignalLostTitle": "Señal perdida",
-  "radarSignalLostMessage": "El dispositivo ha dejado de emitir. Vuelve a la última zona donde la señal era más fuerte.",
+  "radarSearchingTitle": "Buscando señal…",
+  "@radarSearchingTitle": {
+    "description": "El radar acaba de reanudar el escaneo y aún no ha oído al dispositivo"
+  },
+  "radarSearchingMessage": "Volviendo a escanear este dispositivo.",
+  "radarSignalLostTitle": "Sin señal de este dispositivo",
+  "radarSignalLostMessage": "Puede estar apagado, sin batería o fuera de alcance. Asegúrate de que está encendido y muévete por la zona donde lo viste por última vez.",
   "radarSoundOn": "Sonido activado",
   "radarSoundOff": "Sonido silenciado",
   "radarFavoriteAdd": "Añadir a favoritos",

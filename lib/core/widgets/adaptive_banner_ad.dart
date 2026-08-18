@@ -80,6 +80,7 @@ class _AdaptiveBannerAdState extends ConsumerState<AdaptiveBannerAd> {
             _loadedForWidth = width;
             _loading = false;
           });
+          unawaited(_shrinkToServedSize(ad as BannerAd));
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
           AppLogger.debug('Banner load failed: $error', name: 'ads');
@@ -90,6 +91,23 @@ class _AdaptiveBannerAdState extends ConsumerState<AdaptiveBannerAd> {
     );
 
     await banner.load();
+  }
+
+  /// Reserves the height the ad view actually renders at, not the one that was
+  /// requested.
+  ///
+  /// A large anchored adaptive request asks for up to 15 % of the screen
+  /// height, and the served creative is often shorter than that. Keeping the
+  /// requested height would leave a strip of app background inside the banner
+  /// slot: the ad looks unglued from the bottom edge and the list loses the
+  /// difference for nothing.
+  Future<void> _shrinkToServedSize(BannerAd banner) async {
+    final AdSize? served = await banner.getPlatformAdSize();
+    if (!mounted || served == null) return;
+    // Only ever shrinks: growing the slot after the fact would push the list
+    // under the user's thumb right where the ad is.
+    if (_banner != banner || served.height >= (_size?.height ?? 0)) return;
+    setState(() => _size = served);
   }
 
   void _disposeBanner() {

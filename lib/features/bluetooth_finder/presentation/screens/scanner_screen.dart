@@ -15,7 +15,6 @@ import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_tile.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/favorite_device_tile.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/scan_filter_bar.dart';
-import 'package:buscar_audifonos/services/billing/premium_controller.dart';
 import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
 import 'package:buscar_audifonos/services/permissions/permission_service.dart';
 import 'package:flutter/material.dart';
@@ -86,23 +85,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           tooltip: context.l10n.settingsTitle,
         ),
       ],
-      // The hint travels with the button so the arrow cannot drift away from
-      // what it points at, whatever the screen height is.
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          if (!isScanning) const _ScanHint(),
-          FloatingActionButton.extended(
-            onPressed: () => _toggleScan(isScanning: isScanning),
-            icon: Icon(isScanning ? Icons.stop : Icons.bluetooth_searching),
-            label: Text(
-              isScanning
-                  ? context.l10n.finderScanStop
-                  : context.l10n.finderScanStart,
-            ),
-          ),
-        ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _toggleScan(isScanning: isScanning),
+        icon: Icon(isScanning ? Icons.stop : Icons.bluetooth_searching),
+        label: Text(
+          isScanning
+              ? context.l10n.finderScanStop
+              : context.l10n.finderScanStart,
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -116,9 +106,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               isScanning: isScanning,
               onOpen: _openRadar,
               onUnpin: _confirmUnpin,
+              onRename: _renameFavorite,
             ),
           ),
-          if (!ref.watch(isPremiumProvider)) const _RemoveAdsEntryPoint(),
         ],
       ),
     );
@@ -131,10 +121,35 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     );
   }
 
+  /// Lets the user name a favourite whatever they call it out loud.
+  ///
+  /// Two earbuds of the same model advertise the same string, so the advertised
+  /// name is exactly what fails to tell them apart. Free, and reversible by
+  /// emptying the field.
+  Future<void> _renameFavorite(FavoriteDevice favorite) async {
+    final String? name = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) =>
+          _RenameDialog(favorite: favorite),
+    );
+
+    // `null` is a cancel; the empty string is "go back to the advertised name".
+    if (name == null || !mounted) return;
+    await ref
+        .read(favoriteDevicesProvider.notifier)
+        .rename(favorite.id, name.isEmpty ? null : name);
+    if (!mounted) return;
+    context.showSnack(context.l10n.finderRenamed);
+  }
+
   /// Unpinning is free, but it costs a rewarded video to undo, so it always
   /// asks first.
   Future<void> _confirmUnpin(FavoriteDevice favorite) async {
-    final String name = deviceDisplayName(context, favorite.identity);
+    final String name = deviceDisplayName(
+      context,
+      favorite.identity,
+      customName: favorite.customName,
+    );
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -191,58 +206,66 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 }
 
-/// Points at the scan button while nothing is being scanned.
+/// Asks for the new name of a favourite.
 ///
-/// The empty state says the same thing in the middle of the screen, but a user
-/// who already has favourites pinned never sees it — the list is not empty. The
-/// call to action has to live next to the button it is about.
-class _ScanHint extends StatelessWidget {
-  const _ScanHint();
+/// Stateful for one reason: a [TextEditingController] has to be disposed, and a
+/// dialog built inline in a callback has nowhere to do that.
+class _RenameDialog extends StatefulWidget {
+  const _RenameDialog({required this.favorite});
+
+  final FavoriteDevice favorite;
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    // Prefilled with whatever the row reads today, custom or advertised, so the
+    // user edits a name instead of inventing one from scratch.
+    text: deviceDisplayName(
+      context,
+      widget.favorite.identity,
+      customName: widget.favorite.customName,
+    ),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.of(context).pop(_controller.text.trim());
 
   @override
   Widget build(BuildContext context) {
-    final Color background = context.colors.secondaryContainer;
-    final Color foreground = context.colors.onSecondaryContainer;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          ConstrainedBox(
-            // Without a ceiling the bubble would stretch to the full width of
-            // the screen and the arrow would stop lining up with the button.
-            constraints: const BoxConstraints(maxWidth: 240),
-            child: Material(
-              color: background,
-              borderRadius: const BorderRadius.all(
-                Radius.circular(AppRadius.md),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Text(
-                  context.l10n.finderScanHint,
-                  textAlign: TextAlign.end,
-                  style: context.texts.bodySmall?.copyWith(color: foreground),
-                ),
-              ),
-            ),
-          ),
-          // Sits over the extended button's icon rather than its middle, which
-          // is where the eye expects the target of a downward arrow.
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.xl),
-            child: Icon(
-              Icons.arrow_downward,
-              size: 20,
-              color: context.colors.secondary,
-            ),
-          ),
-        ],
+    return AlertDialog(
+      title: Text(context.l10n.finderRenameTitle),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        // A device name is one short line: the keyboard's action key should
+        // finish the job, not add a second line to it.
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _submit(),
+        maxLength: 40,
+        decoration: InputDecoration(
+          labelText: context.l10n.finderRenameFieldLabel,
+          helperText: context.l10n.finderRenameHelp,
+          helperMaxLines: 2,
+        ),
       ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(context.l10n.finderRenameSave),
+        ),
+      ],
     );
   }
 }
@@ -334,6 +357,7 @@ class _ScannerList extends StatelessWidget {
     required this.isScanning,
     required this.onOpen,
     required this.onUnpin,
+    required this.onRename,
   });
 
   final List<FavoriteDevice> favorites;
@@ -341,6 +365,7 @@ class _ScannerList extends StatelessWidget {
   final bool isScanning;
   final void Function(String deviceId) onOpen;
   final void Function(FavoriteDevice favorite) onUnpin;
+  final void Function(FavoriteDevice favorite) onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +384,7 @@ class _ScannerList extends StatelessWidget {
                 favorite: favorite,
                 onTap: () => onOpen(favorite.id),
                 onLongPress: () => onUnpin(favorite),
+                onRename: () => onRename(favorite),
               );
             },
           ),
@@ -373,14 +399,14 @@ class _ScannerList extends StatelessWidget {
               title: isScanning
                   ? context.l10n.finderScanningTitle
                   : context.l10n.finderEmptyTitle,
-              message: isScanning
-                  ? context.l10n.finderScanningMessage
-                  : context.l10n.finderEmptyMessage,
+              // Nothing under the title before the first scan: the title is
+              // already the whole call to action.
+              message: isScanning ? context.l10n.finderScanningMessage : null,
             ),
           )
         else
           SliverPadding(
-            // Clears the floating button and its hint from the last row.
+            // Clears the floating button from the last row.
             padding: const EdgeInsets.only(bottom: AppSpacing.xxl * 2),
             // A busy room easily produces a hundred advertisers, so the rows
             // are built lazily.
@@ -427,20 +453,6 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Discreet paywall entry point, after the content and never blocking.
-class _RemoveAdsEntryPoint extends StatelessWidget {
-  const _RemoveAdsEntryPoint();
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: () => context.goNamed(AppRoutes.paywallName),
-      icon: const Icon(Icons.block),
-      label: Text(context.l10n.settingsRemoveAds),
     );
   }
 }

@@ -91,6 +91,28 @@ demo y puede borrarse. Sus integraciones (interstitial tras acción de valor y
 **no** recibe el dispositivo por `extra`: lo relee del stream por id, porque la
 lectura tiene que seguir cambiando mientras el usuario camina.
 
+**El radar se garantiza su propio escaneo.** Entrar a un dispositivo es pedir una
+lectura fresca *de ese* dispositivo, así que `RadarScreen` arranca el escaneo si
+estaba detenido (con la misma secuencia agrupada de permisos que el FAB) y lo
+vuelve a detener al salir, por las dos salidas: la flecha y el back del sistema.
+
+Decisiones que conviene no deshacer:
+
+- **`_RadarBacking` distingue "hay escaneo" de "hay lectura".** El servicio
+  reemite el último paquete a cada nuevo oyente — eso es lo que evita que la
+  lista se quede en blanco al volver del radar — pero ese paquete es de *antes*
+  de pulsar Detener. Pintarlo dejaba un porcentaje con pinta de vivo que no se
+  movía nunca. Con el escaneo parado o imposible (permisos denegados, radio
+  apagada) la lectura se descarta: 0 %, radar inactivo y mensaje.
+- **El sonido se silencia con la lectura.** Un tren de clics al último
+  `closeness` conocido es la mitad audible del mismo engaño, y por eso encender
+  el sonido sin señal tampoco suena.
+- **Tres estados de texto, no dos**: `radarSearching*` mientras se reanuda el
+  escaneo y `radarSignalLost*` («puede estar apagado… asegúrate de que está
+  encendido») cuando ya se le dio la oportunidad de contestar. Acusar de apagado
+  a un dispositivo al que aún no se ha escuchado es dar por perdido lo que el
+  usuario está buscando.
+
 ### `BluetoothScanService` (`data/`)
 
 Envuelve `flutter_blue_plus`; lógica pura, **sin `BuildContext`** (los permisos
@@ -243,6 +265,21 @@ Decisiones que conviene no deshacer:
   también concede: si los anuncios están apagados para ese usuario, cobrarle uno
   sería una puerta cerrada. `notReady` **no** concede — hay inventario, solo está
   frío — y muestra el snackbar de siempre.
+- **El favorito se puede renombrar, y solo el favorito.** Dos auriculares del
+  mismo modelo anuncian la misma cadena, así que el nombre anunciado es justo lo
+  que no distingue el tuyo. `customName` es lo único de esta feature que escribe
+  el usuario: gana a cualquier nombre resuelto (`deviceDisplayName`, que sigue
+  siendo la única fuente de verdad), **sobrevive a un re-pin** (`add` lo relee
+  antes de refrescar la descripción) y se borra dejando el campo vacío. Un
+  dispositivo no anclado no tiene dónde guardarlo, y por eso no se ofrece.
+- **El lápiz sustituye al indicador de señal, y solo con el escaneo detenido.**
+  Con un escaneo en marcha esa esquina de la fila es la lectura, que es para lo
+  que existe la fila; y detenido no hay lectura que enseñar ahí — el porcentaje
+  congelado sería el mismo engaño que se arregló en el radar (§1.1). El
+  intercambio en el mismo sitio es lo que lo hace evidente sin explicarlo.
+- **El radar titula con el nombre elegido** (`favoriteCustomNameProvider`, en
+  `watch`): si al abrirlo volviera al nombre anunciado, renombrar no habría
+  servido para nada.
 - **El favorito guarda su propia descripción,** no solo el id: sin anuncio no hay
   identidad que resolver y la fila quedaría como «Dispositivo Bluetooth». Se
   guarda solo la mitad estable de `DeviceIdentity` (nombre, modelo, marca,

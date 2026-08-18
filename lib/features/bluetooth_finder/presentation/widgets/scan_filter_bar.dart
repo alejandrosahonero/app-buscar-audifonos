@@ -47,11 +47,7 @@ class ScanFilterBar extends ConsumerWidget {
             onSelected: (bool value) =>
                 controller.setHideWeakSignal(value: value).ignore(),
             avatar: const Icon(Icons.signal_cellular_alt, size: 18),
-            label: Text(
-              context.l10n.finderFilterStrongSignal(
-                ScanFilter.weakSignalThreshold,
-              ),
-            ),
+            label: Text(context.l10n.finderFilterStrongSignal),
           ),
           if (hiddenCount > 0)
             Text(

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:buscar_audifonos/core/extensions/build_context_x.dart';
 import 'package:buscar_audifonos/core/theme/app_spacing.dart';
 import 'package:buscar_audifonos/core/widgets/base_screen.dart';
+import 'package:buscar_audifonos/core/widgets/permission_dialogs.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/geiger_sounder.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
@@ -15,11 +17,27 @@ import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/
 import 'package:buscar_audifonos/services/ads/ads_providers.dart';
 import 'package:buscar_audifonos/services/ads/ads_service.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
+import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
+import 'package:buscar_audifonos/services/permissions/permission_service.dart';
 import 'package:buscar_audifonos/services/review/review_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+/// What is behind the reading the radar is holding.
+enum _RadarBacking {
+  /// A scan is running: the stream is the truth and the radar follows it.
+  live,
+
+  /// The scan was stopped when this screen opened and is being restarted. What
+  /// the stream still holds is the last packet from before Stop.
+  restarting,
+
+  /// No scan could be started (permissions refused, radio off). Nothing here
+  /// can update, so nothing here is shown as a reading.
+  noScan,
+}
 
 /// Live proximity radar for one device.
 ///
@@ -41,6 +59,24 @@ class RadarScreen extends ConsumerStatefulWidget {
 
 class _RadarScreenState extends ConsumerState<RadarScreen> {
   final GeigerSounder _sounder = GeigerSounder();
+
+  /// Held in a field rather than read from `ref` in [dispose]: stopping the
+  /// scan on the way out has to work for the system back gesture too, and by
+  /// then reading a provider is no longer allowed.
+  late final BluetoothScanService _scanService = ref.read(
+    bluetoothScanServiceProvider,
+  );
+
+  /// Whether there is a scan running behind this screen right now.
+  ///
+  /// The stream keeps serving the last packet of a stopped scan — that is what
+  /// keeps the list from blanking — so the radar has to know whether what it is
+  /// holding is a reading or a photograph.
+  _RadarBacking _backing = _RadarBacking.live;
+
+  /// Set when this screen is what turned the scan back on, so leaving restores
+  /// the user's choice instead of quietly draining the battery.
+  bool _stopScanOnLeave = false;
 
   /// Description captured on entry, so the header does not go blank the moment
   /// the device stops advertising — which is exactly when the user is staring
@@ -64,9 +100,20 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     _lastKnownIdentity = current?.identity ?? _savedIdentity();
     _lastKnownPaired = current?.isPaired ?? false;
 
+    // Decided before the first frame: with the scan stopped, `current` is the
+    // last packet from whenever the user pressed Stop. Its percentage would
+    // paint a live-looking radar that never moves again.
+    _backing = _scanService.isScanningNow
+        ? _RadarBacking.live
+        : _RadarBacking.restarting;
+
     // Off the first frame: loading the audio sources touches the platform.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Scan first: getting a live reading is what the user came for, and it
+      // must not queue behind loading an audio asset.
+      await _ensureScanning();
       await _sounder.prepare();
+      if (!mounted) return;
       final DiscoveredDevice? device = ref.read(
         deviceByIdProvider(widget.deviceId),
       );
@@ -76,8 +123,54 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
 
   @override
   void dispose() {
+    // Covers both exits: the app bar arrow and the system back gesture.
+    if (_stopScanOnLeave) unawaited(_scanService.stop());
     unawaited(_sounder.dispose());
     super.dispose();
+  }
+
+  /// Puts a live scan behind this screen, whatever the list was doing.
+  ///
+  /// Opening a device is a request for a fresh reading of *that* device: a
+  /// stopped scan has to be restarted, or the radar is a still photograph.
+  /// [BluetoothScanService.start] clears its own cache and emits an empty list,
+  /// so the stale reading is gone the moment the scan is running again.
+  Future<void> _ensureScanning() async {
+    if (_backing != _RadarBacking.restarting) return;
+
+    // Reached with the scan stopped, which includes the cold-start case: a
+    // favourite can be opened from the list before anything was ever scanned,
+    // so the permissions may still be unanswered. Same grouped sequence the
+    // scan button uses.
+    final bool granted = await PermissionFlow.ensureAll(
+      context,
+      service: ref.read(permissionServiceProvider),
+      permissions: const <AppPermission>[
+        AppPermission.bluetoothScan,
+        AppPermission.bluetoothConnect,
+        AppPermission.location,
+      ],
+      reason: context.l10n.finderPermissionReason,
+    );
+
+    if (!mounted) return;
+    if (!granted) {
+      // Nothing to scan with, so there is nothing to trust either: the readout
+      // stays on the no-signal message rather than on a number that can no
+      // longer change.
+      setState(() => _backing = _RadarBacking.noScan);
+      context.showSnack(context.l10n.finderPermissionRequired);
+      return;
+    }
+
+    _stopScanOnLeave = true;
+    await _scanService.start();
+    if (!mounted) return;
+    setState(
+      () => _backing = _scanService.isScanningNow
+          ? _RadarBacking.live
+          : _RadarBacking.noScan,
+    );
   }
 
   @override
@@ -88,22 +181,41 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       DiscoveredDevice? previous,
       DiscoveredDevice? next,
     ) {
-      if (next == null) return;
+      // Clicking at the last known closeness would point the user at a device
+      // that is not being heard — the audible half of the frozen reading.
+      if (next == null || _backing != _RadarBacking.live) {
+        _sounder.muted = true;
+        return;
+      }
+      _sounder.muted = !_soundOn;
       _sounder.updateCloseness(next.closeness);
       _rememberIdentity(next);
       _maybeRequestReview(next);
     });
 
-    final DiscoveredDevice? device = ref.watch(
+    final DiscoveredDevice? live = ref.watch(
       deviceByIdProvider(widget.deviceId),
     );
+    // Watched unconditionally, then dropped: the subscription must survive the
+    // restart, and a reading from a scan that is no longer running is not a
+    // reading.
+    final DiscoveredDevice? device = _backing == _RadarBacking.live
+        ? live
+        : null;
     final bool isFavorite = ref.watch(isFavoriteProvider(widget.deviceId));
 
     final DeviceIdentity identity =
         _lastKnownIdentity ?? DeviceIdentity.unknown;
 
     return BaseScreen(
-      title: deviceDisplayName(context, identity),
+      // Watched, not captured: renaming a favourite has to retitle this screen
+      // too, or the name the user chose stops being the device's name the
+      // moment they open it.
+      title: deviceDisplayName(
+        context,
+        identity,
+        customName: ref.watch(favoriteCustomNameProvider(widget.deviceId)),
+      ),
       showBanner: false,
       // Only the app bar button runs the "leaving is a value action" path.
       // System back is deliberately left alone so Android's predictive back
@@ -126,7 +238,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              _Readout(device: device),
+              _Readout(
+                device: device,
+                isSearching: _backing == _RadarBacking.restarting,
+              ),
               const SizedBox(height: AppSpacing.md),
               _Controls(
                 soundOn: _soundOn,
@@ -160,7 +275,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
 
   void _toggleSound() {
     setState(() => _soundOn = !_soundOn);
-    _sounder.muted = !_soundOn;
+    // Unmuting with nothing on the air would click at the last closeness heard,
+    // which is the frozen reading all over again. The listener unmutes as soon
+    // as a packet arrives.
+    final bool hasSignal =
+        _backing == _RadarBacking.live &&
+        ref.read(deviceByIdProvider(widget.deviceId)) != null;
+    _sounder.muted = !_soundOn || !hasSignal;
   }
 
   /// The description saved the day this device was pinned, if it ever was.
@@ -229,6 +350,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
             deviceDisplayName(
               dialogContext,
               _lastKnownIdentity ?? DeviceIdentity.unknown,
+              customName: ref.read(favoriteCustomNameProvider(widget.deviceId)),
             ),
           ),
         ),
@@ -331,9 +453,14 @@ class _IdentityHeader extends StatelessWidget {
 }
 
 class _Readout extends StatelessWidget {
-  const _Readout({required this.device});
+  const _Readout({required this.device, required this.isSearching});
 
   final DiscoveredDevice? device;
+
+  /// The scan is being restarted for this screen. Distinguished from "no
+  /// signal" because a device that has not been given a chance to answer yet
+  /// must not be reported as switched off.
+  final bool isSearching;
 
   @override
   Widget build(BuildContext context) {
@@ -343,12 +470,17 @@ class _Readout extends StatelessWidget {
       return Column(
         children: <Widget>[
           Text(
-            context.l10n.radarSignalLostTitle,
+            isSearching
+                ? context.l10n.radarSearchingTitle
+                : context.l10n.radarSignalLostTitle,
+            textAlign: TextAlign.center,
             style: context.texts.titleMedium,
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            context.l10n.radarSignalLostMessage,
+            isSearching
+                ? context.l10n.radarSearchingMessage
+                : context.l10n.radarSignalLostMessage,
             textAlign: TextAlign.center,
             style: context.texts.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,

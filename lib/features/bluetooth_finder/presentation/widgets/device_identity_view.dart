@@ -64,7 +64,15 @@ String deviceCategoryLabel(BuildContext context, DeviceCategory category) =>
 ///
 /// Only the last rung is generic, and reaching it means the advertisement
 /// genuinely said nothing — not that we did not look.
-String deviceDisplayName(BuildContext context, DeviceIdentity identity) {
+String deviceDisplayName(
+  BuildContext context,
+  DeviceIdentity identity, {
+  String? customName,
+}) {
+  // Outranks everything the advertisement says: the user renamed this device
+  // precisely because the advertised name did not tell them which one it was.
+  if (customName != null && customName.isNotEmpty) return customName;
+
   if (identity.hasAdvertisedName) return identity.advertisedName;
 
   final String? model = identity.modelName;

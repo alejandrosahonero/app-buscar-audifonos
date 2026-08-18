@@ -8,8 +8,12 @@ import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identit
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/favorite_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/screens/radar_screen.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/signal_strength_icon.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
 import 'package:buscar_audifonos/services/billing/premium_state.dart';
+import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
+import 'package:buscar_audifonos/services/permissions/permission_service.dart';
 import 'package:buscar_audifonos/services/storage/storage_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,8 +44,16 @@ class _FakeScanService implements BluetoothScanService {
   @override
   List<DiscoveredDevice> get latestDevices => seen;
 
+  final StreamController<bool> _scanning = StreamController<bool>.broadcast();
+
+  /// Replays the current value then follows the changes, like the plugin's own
+  /// stream: a one-shot `Stream.value` would never tell the UI that a scan
+  /// started.
   @override
-  Stream<bool> get isScanning => Stream<bool>.value(scanning);
+  Stream<bool> get isScanning async* {
+    yield scanning;
+    yield* _scanning.stream;
+  }
 
   @override
   bool get isScanningNow => scanning;
@@ -54,16 +66,49 @@ class _FakeScanService implements BluetoothScanService {
   Future<Set<String>> bondedDeviceIds() async => const <String>{};
 
   @override
-  Future<void> start() async => scanning = true;
+  Future<void> start() async {
+    scanning = true;
+    _scanning.add(true);
+  }
 
   @override
-  Future<void> stop() async => scanning = false;
+  Future<void> stop() async {
+    scanning = false;
+    _scanning.add(false);
+  }
 
   @override
   Future<void> requestEnable() async {}
 
   @override
-  Future<void> dispose() async {}
+  Future<void> dispose() async => _scanning.close();
+}
+
+/// Grants everything without touching `permission_handler`, whose platform
+/// channel never answers on the test host — the real service would hang the
+/// permission flow instead of denying it.
+class _FakePermissionService implements PermissionService {
+  @override
+  Future<PermissionOutcome> check(AppPermission permission) async =>
+      PermissionOutcome.granted;
+
+  @override
+  Future<PermissionOutcome> request(AppPermission permission) async =>
+      PermissionOutcome.granted;
+
+  @override
+  Future<Map<AppPermission, PermissionOutcome>> requestAll(
+    List<AppPermission> permissions,
+  ) async => <AppPermission, PermissionOutcome>{
+    for (final AppPermission permission in permissions)
+      permission: PermissionOutcome.granted,
+  };
+
+  @override
+  Future<bool> shouldShowRationale(AppPermission permission) async => false;
+
+  @override
+  Future<bool> openSettings() async => false;
 }
 
 DiscoveredDevice _device({
@@ -105,6 +150,7 @@ Future<void> _pumpApp(
         sharedPreferencesProvider.overrideWithValue(prefs),
         premiumControllerProvider.overrideWith(_FakePremiumController.new),
         bluetoothScanServiceProvider.overrideWithValue(scanService),
+        permissionServiceProvider.overrideWithValue(_FakePermissionService()),
       ],
       child: const App(),
     ),
@@ -119,7 +165,7 @@ void main() {
     await _pumpApp(tester, scanService: _FakeScanService());
 
     expect(find.text('Buscar Audífonos: Localizador'), findsOneWidget);
-    expect(find.text('No devices in sight'), findsOneWidget);
+    expect(find.text('Tap "Scan" to look for devices'), findsOneWidget);
     expect(find.text('Scan'), findsOneWidget);
   });
 
@@ -174,7 +220,10 @@ void main() {
 
     // Same screen the other tests read in English.
     expect(find.text('Escanear'), findsOneWidget);
-    expect(find.text('Ningún dispositivo a la vista'), findsOneWidget);
+    expect(
+      find.text('Pulsa "Escanear" para buscar dispositivos'),
+      findsOneWidget,
+    );
     expect(find.text('Scan'), findsNothing);
   });
 
@@ -193,24 +242,6 @@ void main() {
 
     expect(find.text('Ajustes'), findsOneWidget);
     expect(find.text('Idioma'), findsOneWidget);
-  });
-
-  testWidgets('the scan hint points at the button only while idle', (
-    WidgetTester tester,
-  ) async {
-    await _pumpApp(tester, scanService: _FakeScanService());
-
-    expect(find.text('Tap the Scan button to start looking'), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
-  });
-
-  testWidgets('the scan hint disappears once a scan is running', (
-    WidgetTester tester,
-  ) async {
-    await _pumpApp(tester, scanService: _FakeScanService()..scanning = true);
-
-    expect(find.text('Tap the Scan button to start looking'), findsNothing);
-    expect(find.byIcon(Icons.arrow_downward), findsNothing);
   });
 
   testWidgets('the scan button is laid out clear of the banner slot', (
@@ -286,5 +317,82 @@ void main() {
 
     expect(titles, <String>['My buds', 'Near speaker']);
     expect(find.text('No signal'), findsNothing);
+  });
+
+  testWidgets('a stopped scan offers renaming a favourite, a running one does '
+      'not', (WidgetTester tester) async {
+    final _FakeScanService service = _FakeScanService(
+      seen: <DiscoveredDevice>[
+        _device(id: 'AA:BB:CC:DD:EE:09', name: 'LE_WH-1000XM4', rssi: -55),
+      ],
+    );
+    await _pumpApp(
+      tester,
+      scanService: service,
+      preferences: <String, Object>{
+        'finder_favorite_devices': _storedFavorites(
+          <({String id, String name})>[
+            (id: 'AA:BB:CC:DD:EE:09', name: 'LE_WH-1000XM4'),
+          ],
+        ),
+      },
+    );
+
+    // Stopped: the pencil stands where the signal readout would be.
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+    expect(find.byType(SignalStrengthIcon), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Los de correr');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Los de correr'), findsOneWidget);
+    // The name the user chose replaces the advertised one, it does not join it.
+    expect(find.text('LE_WH-1000XM4'), findsNothing);
+
+    // Scanning: the pencil gives the corner back to the reading, and the chosen
+    // name stays.
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byIcon(Icons.edit_outlined), findsNothing);
+    expect(find.byType(SignalStrengthIcon), findsOneWidget);
+    expect(find.text('Los de correr'), findsOneWidget);
+  });
+
+  testWidgets('opening the radar with the scan stopped rescans that device', (
+    WidgetTester tester,
+  ) async {
+    final _FakeScanService service = _FakeScanService(
+      seen: <DiscoveredDevice>[
+        _device(id: 'AA:BB:CC:DD:EE:01', name: 'My buds', rssi: -60),
+      ],
+    );
+    await _pumpApp(tester, scanService: service);
+
+    expect(service.scanning, isFalse);
+
+    await tester.tap(find.text('My buds'));
+    // Pumped by hand, never settled: the radar sweep animates forever, so
+    // `pumpAndSettle` would wait for a tree that is never going to be still.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(RadarScreen), findsOneWidget);
+    // The list keeps serving the last packet from before Stop; the radar is not
+    // allowed to present that as a live reading, so it restarts the scan.
+    expect(service.scanning, isTrue);
+
+    // Leaving restores what the user had chosen instead of scanning behind
+    // their back.
+    await tester.pageBack();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(service.scanning, isFalse);
   });
 }

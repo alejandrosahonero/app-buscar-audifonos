@@ -22,11 +22,16 @@ class FavoriteDeviceTile extends ConsumerWidget {
     required this.favorite,
     required this.onTap,
     required this.onLongPress,
+    required this.onRename,
     super.key,
   });
 
   final FavoriteDevice favorite;
   final VoidCallback onTap;
+
+  /// Renaming. Offered in place of the signal readout, and only while the scan
+  /// is stopped: a running scan owns that corner of the row.
+  final VoidCallback onRename;
 
   /// Unpinning. Long press rather than a button on the row: removing is rare
   /// and a destructive control sitting next to the row's own tap target is how
@@ -39,12 +44,18 @@ class FavoriteDeviceTile extends ConsumerWidget {
     final DeviceIdentity identity = live == null
         ? favorite.identity
         : favorite.identity.mergedWith(live.identity);
+    final bool isScanning = ref.watch(isScanningProvider).value ?? false;
 
     return DeviceTile(
       identity: identity,
+      customName: favorite.customName,
       device: live,
       onTap: onTap,
       onLongPress: onLongPress,
+      // While the scan runs the row's job is the reading; renaming waits. It is
+      // also the only moment the swap is unambiguous: the icon that appears is
+      // exactly where the signal one was.
+      onRename: isScanning ? null : onRename,
     );
   }
 }
