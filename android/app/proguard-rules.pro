@@ -28,19 +28,6 @@
 -keep class com.google.android.play.core.** { *; }
 -dontwarn com.google.android.play.core.**
 
-# --- Firebase / Crashlytics -------------------------------------------------
-# Firebase discovers its own components (Crashlytics included) via reflection
-# at process start, through FirebaseInitProvider — a ContentProvider that runs
-# before Application.onCreate, before Flutter, before the splash screen. If R8
-# strips a class it reaches only that way, the app dies right there: no
-# splash, no error dialog, just an instant close. That is exactly the crash
-# this rule exists to prevent.
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.internal.** { *; }
--dontwarn com.google.firebase.**
--keepattributes Signature
--keep class * extends java.lang.Exception
-
 # --- Kotlin coroutines used by the plugins --------------------------------
 -dontwarn kotlinx.coroutines.**
 
