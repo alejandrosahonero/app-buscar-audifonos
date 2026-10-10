@@ -57,17 +57,16 @@ abstract final class AppConfig {
   // --- In-app review pacing ----------------------------------------------
 
   /// Successful "value moments" required before the review prompt is allowed.
-  static const int reviewMinSuccessfulActions = 5;
+  /// The moment is finding a lost device, which most users live once or twice:
+  /// waiting for five would mean never asking.
+  static const int reviewMinSuccessfulActions = 1;
 
-  /// Minimum lifetime of the install before asking for a review.
-  static const Duration reviewMinAppAge = Duration(days: 3);
+  /// Minimum lifetime of the install before asking for a review. Zero because
+  /// people install this app *while* searching, so the first find usually
+  /// happens on day one and is the best moment there will ever be.
+  static const Duration reviewMinAppAge = Duration.zero;
 
   /// Minimum distance between two review prompts. Google throttles the dialog
   /// anyway; asking less often keeps the quota for the good moments.
   static const Duration reviewMinInterval = Duration(days: 120);
-
-  // --- Rewards ------------------------------------------------------------
-
-  /// Credits granted by one rewarded video in the demo feature.
-  static const int rewardedCredits = 10;
 }
