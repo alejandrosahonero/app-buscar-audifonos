@@ -194,5 +194,21 @@
   "paywallRestore": "Ya lo compré",
   "paywallUnavailable": "La tienda no está disponible ahora mismo.",
   "paywallPending": "Procesando la compra…",
-  "paywallError": "No se ha podido completar la compra."
+  "paywallError": "No se ha podido completar la compra.",
+
+  "welcomeSkip": "Saltar",
+  "welcomeNext": "Siguiente",
+  "welcomeStart": "Empezar",
+  "welcomeTagline": "Encuentra tus audífonos siguiendo la luz.",
+  "welcomeTaglineBody": "Detecta los dispositivos Bluetooth que tienes cerca y te dice si te estás acercando, aunque no recuerdes dónde los dejaste.",
+  "welcomeHowTitle": "Cómo se usa",
+  "welcomeStepScan": "Pulsa buscar y verás todo lo que tienes cerca.",
+  "welcomeStepOpen": "Toca tus audífonos para abrir el radar.",
+  "welcomeStepWalk": "Camina despacio: si el número sube, vas bien. Activa el sonido para buscar sin mirar.",
+  "welcomeStepFavorite": "Guárdalos en favoritos y estarán siempre arriba, aunque estén apagados.",
+  "welcomeReadyTitle": "Antes de empezar",
+  "welcomePermissionsTitle": "Te pediremos Bluetooth y ubicación",
+  "welcomePermissionsBody": "Solo cuando pulses buscar. Android exige la ubicación para escanear Bluetooth; nunca guardamos ni compartimos dónde estás.",
+  "welcomeLimitsTitle": "Qué puede encontrar",
+  "welcomeLimitsBody": "Dispositivos encendidos que estén a unos metros. Los que usan Bluetooth clásico aparecen como «Señal lenta» y solo si están en modo emparejamiento."
 }

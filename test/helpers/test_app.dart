@@ -118,7 +118,12 @@ Future<void> pumpApp(
   Map<String, Object> preferences = const <String, Object>{},
   bool settle = true,
 }) async {
-  SharedPreferences.setMockInitialValues(preferences);
+  // The first-run welcome is covered by its own test; everything else starts
+  // past it, like every launch after the first.
+  SharedPreferences.setMockInitialValues(<String, Object>{
+    'welcome_done': true,
+    ...preferences,
+  });
   final SharedPreferences prefs = await SharedPreferences.getInstance();
 
   await tester.pumpWidget(

@@ -124,6 +124,29 @@ void main() {
         );
   });
 
+  testWidgets('welcome', (WidgetTester tester) async {
+    await _phone(tester);
+    await pumpApp(
+      tester,
+      scanService: FakeScanService(),
+      settle: false,
+      preferences: <String, Object>{'welcome_done': false, 'app_locale': 'es'},
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    for (int page = 1; page <= 3; page++) {
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/welcome_$page.png'),
+      );
+      if (page < 3) {
+        await tester.tap(find.text('Siguiente'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+    }
+  }, skip: !_enabled);
+
   for (final String mode in <String>['dark', 'light']) {
     testWidgets('list · $mode', (WidgetTester tester) async {
       await _phone(tester);

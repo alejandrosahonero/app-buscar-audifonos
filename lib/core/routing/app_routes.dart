@@ -7,6 +7,12 @@ abstract final class AppRoutes {
   static const String homePath = '/';
   static const String homeName = 'home';
 
+  /// First-run welcome. Everything redirects here until it is completed, with
+  /// the original destination in [welcomeFromParam].
+  static const String welcomePath = '/welcome';
+  static const String welcomeName = 'welcome';
+  static const String welcomeFromParam = 'from';
+
   static const String settingsPath = '/settings';
   static const String settingsName = 'settings';
 

@@ -679,6 +679,17 @@ primer frame.
 
 ---
 
+## 9.2 Splash y bienvenida (obligatorios)
+
+- **Splash nativo** (`values-v31` + `values-night-v31` + `launch_background`): logo «Ondas» sobre Marea, el mismo color que la bienvenida y la ventana de fondo, así que abrir la app es una sola superficie sin destellos. **Nunca alargado a propósito**: dura lo que tarde el primer frame.
+- **Bienvenida** (`features/welcome/`): 3 páginas deslizables — qué es (logo, nombre, frase), cómo se usa (4 pasos numerados en el orden real de una búsqueda) y antes de empezar (qué permisos se pedirán y por qué, y qué puede y no puede encontrar). Siempre en el tema oscuro de la marca, barra de estado clara, cada página con su propio scroll para pantallas pequeñas y texto grande.
+- Se ve **una vez**: `welcome_done` en preferencias (`welcomeDoneProvider`). El `redirect` de go_router manda todo a `/welcome?from=<ruta>` hasta completarla, también los deep links, y al terminar vuelve a `from` (solo rutas internas que empiecen por `/`).
+- «Saltar» existe porque no hay nada que aceptar; si algún día hay normas o edad mínima, quitarlo y poner casillas obligatorias.
+- **No pide permisos**: se piden al pulsar buscar, donde el motivo es evidente. Android recuerda el «no».
+- Los tests arrancan con `welcome_done: true` (`test/helpers/test_app.dart`); la bienvenida tiene los suyos en `test/features/welcome/`.
+
+---
+
 ## 10. Comandos
 
 ```bash

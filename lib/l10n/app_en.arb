@@ -117,5 +117,21 @@
   "paywallRestore": "I already bought it",
   "paywallUnavailable": "The store is not available right now.",
   "paywallPending": "Processing the purchase…",
-  "paywallError": "The purchase could not be completed."
+  "paywallError": "The purchase could not be completed.",
+
+  "welcomeSkip": "Skip",
+  "welcomeNext": "Next",
+  "welcomeStart": "Get started",
+  "welcomeTagline": "Find your earbuds by following the light.",
+  "welcomeTaglineBody": "It picks up the Bluetooth devices around you and tells you whether you are getting closer, even when you cannot remember where you left them.",
+  "welcomeHowTitle": "How it works",
+  "welcomeStepScan": "Tap search to see everything nearby.",
+  "welcomeStepOpen": "Tap your earbuds to open the radar.",
+  "welcomeStepWalk": "Walk slowly: if the number goes up, you are on track. Turn the sound on to search without looking.",
+  "welcomeStepFavorite": "Save them as a favourite and they stay at the top, even when switched off.",
+  "welcomeReadyTitle": "Before you start",
+  "welcomePermissionsTitle": "We will ask for Bluetooth and location",
+  "welcomePermissionsBody": "Only when you tap search. Android requires location to scan for Bluetooth; we never store or share where you are.",
+  "welcomeLimitsTitle": "What it can find",
+  "welcomeLimitsBody": "Devices that are switched on and a few metres away. Those using classic Bluetooth show up as “Slow signal”, and only while in pairing mode."
 }

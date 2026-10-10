@@ -4,6 +4,8 @@ import 'package:buscar_audifonos/features/bluetooth_finder/presentation/screens/
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/screens/scanner_screen.dart';
 import 'package:buscar_audifonos/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:buscar_audifonos/features/settings/presentation/screens/settings_screen.dart';
+import 'package:buscar_audifonos/features/welcome/presentation/providers/welcome_controller.dart';
+import 'package:buscar_audifonos/features/welcome/presentation/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +28,29 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.homePath,
     debugLogDiagnostics: false,
+    // First run: nothing is reachable before the welcome, deep links included.
+    // The destination rides along in `from`, so a link opened on first launch
+    // lands where it pointed once the welcome is done.
+    redirect: (BuildContext context, GoRouterState state) {
+      final bool done = ref.read(welcomeDoneProvider);
+      final bool atWelcome = state.matchedLocation == AppRoutes.welcomePath;
+      if (done) return atWelcome ? AppRoutes.homePath : null;
+      if (atWelcome) return null;
+      return Uri(
+        path: AppRoutes.welcomePath,
+        queryParameters: <String, String>{
+          AppRoutes.welcomeFromParam: state.uri.toString(),
+        },
+      ).toString();
+    },
     routes: <RouteBase>[
+      GoRoute(
+        path: AppRoutes.welcomePath,
+        name: AppRoutes.welcomeName,
+        builder: (BuildContext context, GoRouterState state) => WelcomeScreen(
+          from: state.uri.queryParameters[AppRoutes.welcomeFromParam],
+        ),
+      ),
       GoRoute(
         path: AppRoutes.homePath,
         name: AppRoutes.homeName,
