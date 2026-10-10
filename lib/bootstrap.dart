@@ -10,6 +10,7 @@ import 'package:buscar_audifonos/services/review/review_providers.dart';
 import 'package:buscar_audifonos/services/storage/storage_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -52,6 +53,8 @@ Future<void> bootstrap() async {
         );
         return true;
       };
+
+      LicenseRegistry.addLicense(_fontLicenses);
 
       final SharedPreferences preferences =
           await SharedPreferences.getInstance();
@@ -123,5 +126,18 @@ Future<void> _initializeAfterFirstFrame(ProviderContainer container) async {
       error: error,
       stackTrace: stackTrace,
     );
+  }
+}
+
+/// OFL requires the licence to travel with the fonts. Read lazily: the
+/// registry only calls this when someone opens the licences page.
+Stream<LicenseEntry> _fontLicenses() async* {
+  for (final (String family, String asset) in const <(String, String)>[
+    ('Sora', 'assets/fonts/OFL-sora.txt'),
+    ('Manrope', 'assets/fonts/OFL-manrope.txt'),
+  ]) {
+    yield LicenseEntryWithLineBreaks(<String>[
+      family,
+    ], await rootBundle.loadString(asset));
   }
 }

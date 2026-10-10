@@ -8,9 +8,9 @@ import 'package:flutter/material.dart';
 /// the list icon and the radar can never drift apart.
 Color proximityColor(BuildContext context, ProximityBand band) =>
     switch (band) {
-      ProximityBand.far => context.colors.error,
-      ProximityBand.near => context.semanticColors.warning,
-      ProximityBand.veryNear => context.semanticColors.success,
+      ProximityBand.far => context.semanticColors.far,
+      ProximityBand.near => context.semanticColors.near,
+      ProximityBand.veryNear => context.semanticColors.veryNear,
     };
 
 String proximityLabel(BuildContext context, ProximityBand band) =>

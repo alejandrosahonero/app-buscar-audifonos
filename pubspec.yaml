@@ -105,4 +105,26 @@ flutter:
     # Clic del radar. Generado, no grabado:
     #   dart run tool/generate_audio_assets.dart
     - assets/audio/
+    # Licencias OFL de las fuentes, registradas en LicenseRegistry (bootstrap).
+    - assets/fonts/OFL-sora.txt
+    - assets/fonts/OFL-manrope.txt
   #   - assets/images/     # WebP para bitmaps, SVG para iconografía.
+
+  # Marca "Faro". Empaquetadas, nunca google_fonts en tiempo de ejecución: el
+  # primer frame no puede esperar a la red. Pesos estáticos porque Flutter no
+  # mapea fontWeight al eje de una fuente variable.
+  fonts:
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/Sora-300.ttf
+          weight: 300
+        - asset: assets/fonts/Sora-600.ttf
+          weight: 600
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-400.ttf
+          weight: 400
+        - asset: assets/fonts/Manrope-500.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope-700.ttf
+          weight: 700

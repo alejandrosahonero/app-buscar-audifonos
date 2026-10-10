@@ -2,7 +2,8 @@ import 'package:buscar_audifonos/services/storage/storage_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Persisted light/dark/system preference.
+/// Persisted light/dark/system preference. Dark until the user picks
+/// otherwise: the brand is designed dark-first, for searching in poor light.
 ///
 /// Synchronous by design: the value comes from `SharedPreferences`, which is
 /// already loaded in `bootstrap`, so the first frame paints with the right
@@ -21,8 +22,8 @@ class ThemeModeController extends Notifier<ThemeMode> {
 
     return switch (stored) {
       'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.dark,
     };
   }
 
