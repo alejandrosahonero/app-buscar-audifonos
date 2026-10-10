@@ -14,6 +14,7 @@ import 'package:buscar_audifonos/features/bluetooth_finder/presentation/provider
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_tile.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/favorite_device_tile.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/proximity_scale.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/scan_filter_bar.dart';
 import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
 import 'package:buscar_audifonos/services/permissions/permission_service.dart';
@@ -477,6 +478,10 @@ class _ScannerList extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: <Widget>[
+        // Only with a live scan: positions from a stopped one would be a
+        // photograph pretending to be a reading.
+        if (isScanning && devices.isNotEmpty)
+          SliverToBoxAdapter(child: ProximityScale(devices: devices)),
         if (favorites.isNotEmpty) ...<Widget>[
           _SectionHeader(title: context.l10n.finderFavoritesTitle),
           // `.builder`, never a fixed children list: this one is short, but the
@@ -513,8 +518,13 @@ class _ScannerList extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AppSpacing.lg),
             // A busy room easily produces a hundred advertisers, so the rows
             // are built lazily.
-            sliver: SliverList.builder(
+            sliver: SliverList.separated(
               itemCount: devices.length,
+              separatorBuilder: (BuildContext context, int index) =>
+                  const Divider(
+                    indent: AppSpacing.md,
+                    endIndent: AppSpacing.md,
+                  ),
               itemBuilder: (BuildContext context, int index) {
                 final DiscoveredDevice device = devices[index];
                 return DeviceTile(
@@ -556,7 +566,7 @@ class _SectionHeader extends StatelessWidget {
         child: Text(
           title,
           style: context.texts.labelLarge?.copyWith(
-            color: context.colors.primary,
+            color: context.colors.onSurfaceVariant,
           ),
         ),
       ),

@@ -94,6 +94,7 @@
   },
   "finderMetaPaired": "Vinculado",
   "finderMetaSlowSignal": "Señal lenta",
+  "finderScaleHint": "Cada punto es un dispositivo. Muévete y mira cuál se acerca a la derecha.",
   "finderMetaPairable": "Emparejable",
   "finderTraitFastPair": "Fast Pair",
   "finderTraitSwiftPair": "Swift Pair",

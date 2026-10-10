@@ -1,122 +1,17 @@
-import 'dart:async';
 import 'dart:convert';
 
-import 'package:buscar_audifonos/app.dart';
 import 'package:buscar_audifonos/core/widgets/adaptive_banner_ad.dart';
-import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/favorite_device.dart';
-import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/screens/radar_screen.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_tile.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/signal_strength_icon.dart';
-import 'package:buscar_audifonos/services/billing/premium_controller.dart';
-import 'package:buscar_audifonos/services/billing/premium_state.dart';
-import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
-import 'package:buscar_audifonos/services/permissions/permission_service.dart';
-import 'package:buscar_audifonos/services/storage/storage_providers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// Replaces the real controller so the test never touches Google Play Billing.
-/// Overriding `build` is enough: no platform channel is opened.
-class _FakePremiumController extends PremiumController {
-  @override
-  Future<PremiumStatus> build() async =>
-      const PremiumStatus(isPremium: false, storeAvailable: false);
-}
-
-/// Stands in for the real scanner so the test never touches the Bluetooth
-/// stack. `implements` (not `extends`) on purpose: the real constructor
-/// subscribes to a platform stream.
-class _FakeScanService implements BluetoothScanService {
-  _FakeScanService({this.seen = const <DiscoveredDevice>[]});
-
-  final List<DiscoveredDevice> seen;
-  bool scanning = false;
-
-  @override
-  Stream<List<DiscoveredDevice>> get devices =>
-      Stream<List<DiscoveredDevice>>.value(seen);
-
-  @override
-  List<DiscoveredDevice> get latestDevices => seen;
-
-  final StreamController<bool> _scanning = StreamController<bool>.broadcast();
-
-  /// Replays the current value then follows the changes, like the plugin's own
-  /// stream: a one-shot `Stream.value` would never tell the UI that a scan
-  /// started.
-  @override
-  Stream<bool> get isScanning async* {
-    yield scanning;
-    yield* _scanning.stream;
-  }
-
-  @override
-  bool get isScanningNow => scanning;
-
-  @override
-  Stream<BluetoothAvailability> get availability =>
-      Stream<BluetoothAvailability>.value(BluetoothAvailability.ready);
-
-  @override
-  Future<Set<String>> bondedDeviceIds() async => const <String>{};
-
-  @override
-  Future<void> start() async {
-    scanning = true;
-    _scanning.add(true);
-  }
-
-  @override
-  Future<void> stop() async {
-    scanning = false;
-    _scanning.add(false);
-  }
-
-  String? focusedId;
-
-  @override
-  void focusOn(String? deviceId) => focusedId = deviceId;
-
-  @override
-  Future<void> requestEnable() async {}
-
-  @override
-  Future<void> dispose() async => _scanning.close();
-}
-
-/// Grants everything without touching `permission_handler`, whose platform
-/// channel never answers on the test host — the real service would hang the
-/// permission flow instead of denying it.
-class _FakePermissionService implements PermissionService {
-  @override
-  Future<PermissionOutcome> check(AppPermission permission) async =>
-      PermissionOutcome.granted;
-
-  @override
-  Future<PermissionOutcome> request(AppPermission permission) async =>
-      PermissionOutcome.granted;
-
-  @override
-  Future<Map<AppPermission, PermissionOutcome>> requestAll(
-    List<AppPermission> permissions,
-  ) async => <AppPermission, PermissionOutcome>{
-    for (final AppPermission permission in permissions)
-      permission: PermissionOutcome.granted,
-  };
-
-  @override
-  Future<bool> shouldShowRationale(AppPermission permission) async => false;
-
-  @override
-  Future<bool> openSettings() async => false;
-}
+import 'helpers/test_app.dart';
 
 DiscoveredDevice _device({
   required String id,
@@ -164,33 +59,11 @@ Iterable<String> _rowNames(WidgetTester tester) {
   });
 }
 
-Future<void> _pumpApp(
-  WidgetTester tester, {
-  required BluetoothScanService scanService,
-  Map<String, Object> preferences = const <String, Object>{},
-}) async {
-  SharedPreferences.setMockInitialValues(preferences);
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        premiumControllerProvider.overrideWith(_FakePremiumController.new),
-        bluetoothScanServiceProvider.overrideWithValue(scanService),
-        permissionServiceProvider.overrideWithValue(_FakePermissionService()),
-      ],
-      child: const App(),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
 void main() {
   testWidgets('the scanner screen invites the user to start a scan', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(tester, scanService: _FakeScanService());
+    await pumpApp(tester, scanService: FakeScanService());
 
     expect(find.text('Buscar Audífonos'), findsOneWidget);
     expect(find.text('Tap to look for devices'), findsOneWidget);
@@ -203,8 +76,8 @@ void main() {
   testWidgets('the empty state button starts the scan and then steps aside', (
     WidgetTester tester,
   ) async {
-    final _FakeScanService service = _FakeScanService();
-    await _pumpApp(tester, scanService: service);
+    final FakeScanService service = FakeScanService();
+    await pumpApp(tester, scanService: service);
 
     await tester.tap(
       find
@@ -228,9 +101,9 @@ void main() {
   testWidgets('discovered devices are listed strongest first', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(
+    await pumpApp(
       tester,
-      scanService: _FakeScanService(
+      scanService: FakeScanService(
         seen: <DiscoveredDevice>[
           _device(id: 'AA:BB:CC:DD:EE:01', name: 'Far buds', rssi: -80),
           _device(id: 'AA:BB:CC:DD:EE:02', name: 'Near buds', rssi: -45),
@@ -246,9 +119,9 @@ void main() {
   testWidgets('the default filters hide unnamed and very weak devices', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(
+    await pumpApp(
       tester,
-      scanService: _FakeScanService(
+      scanService: FakeScanService(
         seen: <DiscoveredDevice>[
           _device(id: 'AA:BB:CC:DD:EE:01', name: 'Good buds', rssi: -50),
           _device(id: 'AA:BB:CC:DD:EE:02', name: '', rssi: -50),
@@ -266,9 +139,9 @@ void main() {
   testWidgets('the stored language wins over the phone language', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(
+    await pumpApp(
       tester,
-      scanService: _FakeScanService(),
+      scanService: FakeScanService(),
       preferences: <String, Object>{'app_locale': 'es'},
     );
 
@@ -280,7 +153,7 @@ void main() {
   testWidgets('settings switches the language without a restart', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(tester, scanService: _FakeScanService());
+    await pumpApp(tester, scanService: FakeScanService());
 
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
@@ -297,7 +170,7 @@ void main() {
   testWidgets('the scan button is laid out clear of the banner slot', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(tester, scanService: _FakeScanService());
+    await pumpApp(tester, scanService: FakeScanService());
 
     // The banner travels in the scaffold's bottom bar, not in the body: that is
     // what makes the scaffold position the floating button above it instead of
@@ -318,9 +191,9 @@ void main() {
   testWidgets('a favourite that is out of range is still listed, as offline', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(
+    await pumpApp(
       tester,
-      scanService: _FakeScanService(
+      scanService: FakeScanService(
         seen: <DiscoveredDevice>[
           _device(id: 'AA:BB:CC:DD:EE:01', name: 'Some speaker', rssi: -50),
         ],
@@ -351,9 +224,9 @@ void main() {
   testWidgets('a row hugs what it has to say, centred on its icon', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(
+    await pumpApp(
       tester,
-      scanService: _FakeScanService(
+      scanService: FakeScanService(
         seen: <DiscoveredDevice>[
           // Heard, and with a battery level to put in a chip.
           _device(
@@ -444,12 +317,12 @@ void main() {
   testWidgets('stopping the scan takes the readings away with it', (
     WidgetTester tester,
   ) async {
-    final _FakeScanService service = _FakeScanService(
+    final FakeScanService service = FakeScanService(
       seen: <DiscoveredDevice>[
         _device(id: 'AA:BB:CC:DD:EE:01', name: 'Some speaker', rssi: -50),
       ],
     );
-    await _pumpApp(tester, scanService: service);
+    await pumpApp(tester, scanService: service);
 
     await tester.tap(find.byIcon(Icons.bluetooth_searching).first);
     await tester.pump();
@@ -471,9 +344,9 @@ void main() {
   testWidgets('a favourite that is in range is pinned on top, and only once', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(
+    await pumpApp(
       tester,
-      scanService: _FakeScanService(
+      scanService: FakeScanService(
         seen: <DiscoveredDevice>[
           // Stronger signal, yet it must still sort below the favourite.
           _device(id: 'AA:BB:CC:DD:EE:01', name: 'Near speaker', rssi: -40),
@@ -499,12 +372,12 @@ void main() {
   testWidgets('a long press on a favourite renames it', (
     WidgetTester tester,
   ) async {
-    final _FakeScanService service = _FakeScanService(
+    final FakeScanService service = FakeScanService(
       seen: <DiscoveredDevice>[
         _device(id: 'AA:BB:CC:DD:EE:09', name: 'LE_WH-1000XM4', rssi: -55),
       ],
     );
-    await _pumpApp(
+    await pumpApp(
       tester,
       scanService: service,
       preferences: <String, Object>{
@@ -546,9 +419,9 @@ void main() {
   testWidgets('the long press menu can also unpin, through its warning', (
     WidgetTester tester,
   ) async {
-    await _pumpApp(
+    await pumpApp(
       tester,
-      scanService: _FakeScanService(),
+      scanService: FakeScanService(),
       preferences: <String, Object>{
         'finder_favorite_devices': _storedFavorites(
           <({String id, String name})>[
@@ -574,12 +447,12 @@ void main() {
   testWidgets('opening the radar with the scan stopped rescans that device', (
     WidgetTester tester,
   ) async {
-    final _FakeScanService service = _FakeScanService(
+    final FakeScanService service = FakeScanService(
       seen: <DiscoveredDevice>[
         _device(id: 'AA:BB:CC:DD:EE:01', name: 'My buds', rssi: -60),
       ],
     );
-    await _pumpApp(tester, scanService: service);
+    await pumpApp(tester, scanService: service);
 
     expect(service.scanning, isFalse);
 

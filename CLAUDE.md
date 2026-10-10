@@ -250,8 +250,18 @@ Rango útil **-100 dBm → -30 dBm** mapeado a 0-100 %. **No se muestra distanci
 metros**: el RSSI depende de cuerpos, paredes y potencia del emisor, así que se
 enseña una cercanía relativa que el usuario "escala" caminando.
 **Tampoco se muestran los dBm**: es un dato técnico que no ayuda a buscar.
-Bandas: `far` (<40 %) rojo, `near` (40-72 %) ámbar, `veryNear` (≥72 %) verde,
-resueltas en un solo sitio (`proximityColor` en `signal_strength_icon.dart`).
+Bandas: `far` (<40 %), `near` (40-72 %), `veryNear` (≥72 %), pintadas como **un
+solo ámbar a tres intensidades** (`AppSemanticColors.far/near/veryNear`,
+resueltas en `proximityColor` de `signal_strength_icon.dart`). Ya no hay
+semáforo rojo/ámbar/verde: «lejos» no es un error, es donde empieza toda búsqueda.
+
+**Lista:** con el escaneo activo, arriba va `ProximityScale` — todos los
+dispositivos en una línea de lejos a muy cerca, nombrando solo el más cercano
+(las etiquetas de todos chocarían en un móvil estrecho).
+**Radar:** `RadarView` es un **haz de faro** cuyo alcance y brillo crecen con
+la cercanía. El vaivén del haz es ambiente, **no** una dirección (BLE no la da).
+El número va arriba, grande y en Sora fina, alineado a la izquierda; los
+controles son dos círculos de 56 dp con su etiqueta debajo.
 
 ### Sonido Geiger (`data/geiger_sounder.dart`)
 
@@ -547,10 +557,26 @@ como *Crash logs* y *Diagnostics*.
 
 ---
 
-## 6. Tema y diseño (Material 3)
+## 6. Tema y diseño — marca «Faro» (Material 3)
 
-- Un **único seed color** (`AppColors.seed`) genera los esquemas claro y oscuro con `ColorScheme.fromSeed`. Rebrandear una app nueva = cambiar esa constante.
-- `AppTheme.light([scheme])` / `AppTheme.dark([scheme])` aceptan un `ColorScheme` externo: si algún día se quiere Material You (colores del fondo de pantalla), se inyecta ahí sin tocar el resto del tema.
+Elegida entre 6 diseños completos (guía de marca). **Oscura por defecto**: se busca
+debajo de la cama y en el coche. Un solo acento, el ámbar de un faro.
+
+| Color | Oscuro | Claro | Uso |
+|---|---|---|---|
+| Marea | `#071820` | `#071820` | Fondo oscuro, splash, fondo del icono |
+| Luz de faro | `#F2B455` | `#A3620A` | Primario, cifras de cercanía |
+| Espuma / Tinta | `#E4EDEF` | `#13232A` | Texto |
+| Casco | `#0F2A33` | `#FFFFFF` | Superficies |
+| Bruma | `#8FA6AC` | `#5A6C72` | Texto secundario, «lejos» |
+| Línea | `#1E3C47` | `#D3DCDD` | Separadores de 1 px |
+
+- **`ColorScheme` escrito a mano** en `AppColors.dark/light`, nunca `fromSeed` (re-deriva los tonos y el ámbar deja de ser este ámbar). **Sin color dinámico**: Material You repintaría la marca con el fondo de pantalla.
+- **Tipografía:** Sora (títulos y cifras, las grandes en peso 300) + Manrope (texto). Empaquetadas en `assets/fonts/` en pesos estáticos (Flutter no mapea `fontWeight` al eje de una variable) y sus licencias OFL registradas en `bootstrap.dart`. Nunca `google_fonts` en tiempo de ejecución.
+- **Formas:** líneas de 1 px (`outlineVariant`), controles en píldora o círculo, sin sombras ni elevación teñida.
+- `ThemeModeController`: sin preferencia guardada → **oscuro**; «sistema» es una elección explícita.
+- **Descartado, no reintroducir:** el índigo de la plantilla, el semáforo de cercanía, el azul Bluetooth y el verde sonar (lo que usa toda la competencia).
+- **Capturas golden** de lista y radar en claro y oscuro (`test/golden/`, fuera de la ejecución normal porque el rasterizado cambia entre sistemas): `GOLDENS=1 flutter test test/golden --update-goldens` y mirar las imágenes tras cada cambio visual.
 - Colores semánticos (success/warning) vía `ThemeExtension<AppSemanticColors>`, accesibles con `context.semanticColors`.
 - **Tokens de espaciado y radios** en `AppSpacing` / `AppRadius`. Prohibido escribir paddings a pelo.
 - `ThemeModeController` persiste claro/oscuro/sistema en `shared_preferences` de forma **síncrona** (las prefs ya están cargadas en `bootstrap`), así el primer frame no parpadea con el brillo equivocado.
@@ -616,9 +642,18 @@ Sin `flutter_launcher_icons` ni `flutter_native_splash`: los recursos están
 escritos a mano en `android/app/src/main/res/`, son cuatro archivos y así no hay
 un paso de generación que pueda sobrescribirlos.
 
+**Logo «Ondas»**: unos auriculares dibujados con ondas de radar que se cierran
+sobre un punto de luz. Maestro en `brand/logo.svg` (lienzo de 108 del icono
+adaptativo, arte dentro del círculo seguro de 66), más `brand/icon.svg` (con
+fondo), `brand/logo-mono.svg` y `brand/play-icon-512.png` / `-1024.png` para Play.
+
 **Icono**: adaptativo (`mipmap-anydpi-v26/ic_launcher.xml`) = color
-`@color/ic_launcher_background` + vector `@drawable/ic_launcher_foreground`, más
-`monochrome` para los iconos temáticos de Android 13.
+`@color/ic_launcher_background` (Marea) + vector `@drawable/ic_launcher_foreground`,
+y `@drawable/ic_launcher_monochrome` para los iconos temáticos de Android 13.
+Los `mipmap-*/ic_launcher*.png` son para Android 7 (minSdk 24), que no usa el
+adaptativo; se generan desde `brand/icon.svg`. La ventana de fondo
+(`NormalTheme`) también es Marea, para que no haya destello blanco antes del
+primer frame.
 
 **Splash** — hay que tocar **dos** mecanismos, y esto es lo que se olvida:
 

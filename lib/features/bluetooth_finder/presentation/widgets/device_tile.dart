@@ -126,9 +126,13 @@ class DeviceTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: <Widget>[
+                  // Sora light, like the radar's big reading: the same number
+                  // in the same voice, wherever it appears.
                   Text(
                     '${device.closenessPercent} %',
-                    style: context.texts.titleMedium?.copyWith(
+                    style: context.texts.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w300,
+                      height: 1,
                       color: proximityColor(context, device.band),
                     ),
                   ),
@@ -136,9 +140,7 @@ class DeviceTile extends StatelessWidget {
                   SignalStrengthIcon(closeness: device.closeness),
                 ],
               ),
-              const SizedBox(width: AppSpacing.xs),
             ],
-            Icon(Icons.chevron_right, color: context.colors.outline),
           ],
         ),
       ),

@@ -14,6 +14,7 @@ import 'package:buscar_audifonos/features/bluetooth_finder/presentation/provider
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/radar_view.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/signal_strength_icon.dart';
 import 'package:buscar_audifonos/services/ads/ads_providers.dart';
 import 'package:buscar_audifonos/services/ads/ads_service.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
@@ -252,21 +253,24 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             children: <Widget>[
-              _IdentityHeader(
+              // Left-aligned like an instrument readout, not centred like a
+              // headline.
+              _Reading(
+                device: device,
+                isSearching:
+                    _backing == _RadarBacking.restarting ||
+                    (_slowGraceActive && device == null),
                 identity: identity,
                 isPaired: _lastKnownPaired,
                 isSlowSignal: _lastKnownSlow,
               ),
-              const SizedBox(height: AppSpacing.md),
               Expanded(
-                child: Center(
-                  child: RadarView(
-                    closeness: device?.closeness ?? 0,
-                    active: device != null,
-                  ),
+                child: RadarView(
+                  closeness: device?.closeness ?? 0,
+                  active: device != null,
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.sm),
               _Readout(
                 device: device,
                 isSearching:
@@ -453,47 +457,87 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   }
 }
 
-/// What the device *is*, under the title.
+/// The reading, large, then what the device *is*.
 ///
-/// This is where the raw address used to be printed. An address identifies
-/// hardware and tells a person nothing they can use, so it was replaced by the
-/// facts they can: kind, brand, battery, whether it is already theirs.
-class _IdentityHeader extends StatelessWidget {
-  const _IdentityHeader({
+/// The percentage is set light and big — glanced at while walking, it should
+/// read as a calm instrument, not an alarm. Below it, the facts a person can
+/// use (kind, brand, battery, whether it is already theirs) where the raw
+/// address used to be printed.
+class _Reading extends StatelessWidget {
+  const _Reading({
+    required this.device,
+    required this.isSearching,
     required this.identity,
     required this.isPaired,
     required this.isSlowSignal,
   });
 
+  final DiscoveredDevice? device;
+  final bool isSearching;
   final DeviceIdentity identity;
   final bool isPaired;
   final bool isSlowSignal;
 
   @override
   Widget build(BuildContext context) {
+    final DiscoveredDevice? device = this.device;
     final String? kind = deviceKindLine(context, identity);
+    final Color bandColor = device == null
+        ? context.colors.onSurfaceVariant
+        : proximityColor(context, device.band);
 
-    return Column(
-      children: <Widget>[
-        if (kind != null)
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text.rich(
+            TextSpan(
+              text: device == null ? '—' : '${device.closenessPercent}',
+              children: <InlineSpan>[
+                TextSpan(
+                  text: ' %',
+                  style: context.texts.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w300,
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            style: context.texts.displayLarge?.copyWith(height: 1),
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Text(
-            kind,
-            textAlign: TextAlign.center,
-            style: context.texts.bodySmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
+            device != null
+                ? proximityLabel(context, device.band)
+                : isSearching
+                ? context.l10n.radarSearchingTitle
+                : context.l10n.radarSignalLostTitle,
+            style: context.texts.titleMedium?.copyWith(
+              color: bandColor,
+              fontWeight: FontWeight.w700,
             ),
           ),
-        const SizedBox(height: AppSpacing.sm),
-        // Room for one more chip than the list: this screen has the width and
-        // the user has already committed to this device.
-        DeviceMetaChips(
-          identity: identity,
-          isPaired: isPaired,
-          isSlowSignal: isSlowSignal,
-          maxChips: 4,
-          alignment: WrapAlignment.center,
-        ),
-      ],
+          if (kind != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              kind,
+              style: context.texts.bodySmall?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
+            ),
+          ],
+          // Room for one more chip than the list: this screen has the width and
+          // the user has already committed to this device.
+          DeviceMetaChips(
+            identity: identity,
+            isPaired: isPaired,
+            isSlowSignal: isSlowSignal,
+            maxChips: 4,
+            gapAbove: AppSpacing.sm,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -512,27 +556,17 @@ class _Readout extends StatelessWidget {
   Widget build(BuildContext context) {
     final DiscoveredDevice? device = this.device;
 
+    // The title ("searching…" / "no signal") already sits under the number;
+    // this line only explains it.
     if (device == null) {
-      return Column(
-        children: <Widget>[
-          Text(
-            isSearching
-                ? context.l10n.radarSearchingTitle
-                : context.l10n.radarSignalLostTitle,
-            textAlign: TextAlign.center,
-            style: context.texts.titleMedium,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            isSearching
-                ? context.l10n.radarSearchingMessage
-                : context.l10n.radarSignalLostMessage,
-            textAlign: TextAlign.center,
-            style: context.texts.bodySmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
-            ),
-          ),
-        ],
+      return Text(
+        isSearching
+            ? context.l10n.radarSearchingMessage
+            : context.l10n.radarSignalLostMessage,
+        textAlign: TextAlign.center,
+        style: context.texts.bodySmall?.copyWith(
+          color: context.colors.onSurfaceVariant,
+        ),
       );
     }
 
@@ -568,27 +602,82 @@ class _Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    // Round, icon-first controls with their label underneath: the hands are
+    // busy and the eyes are on the room, so the targets are big and few.
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        FilledButton.tonalIcon(
+        _RoundControl(
+          icon: soundOn ? Icons.volume_up : Icons.volume_off,
+          label: soundOn
+              ? context.l10n.radarSoundOn
+              : context.l10n.radarSoundOff,
+          selected: soundOn,
           onPressed: onToggleSound,
-          icon: Icon(soundOn ? Icons.volume_up : Icons.volume_off),
-          label: Text(
-            soundOn ? context.l10n.radarSoundOn : context.l10n.radarSoundOff,
-          ),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        OutlinedButton.icon(
+        const SizedBox(width: AppSpacing.xl),
+        _RoundControl(
+          icon: isFavorite ? Icons.star : Icons.star_border,
+          label: isFavorite
+              ? context.l10n.radarFavoriteRemove
+              : context.l10n.radarFavoriteAdd,
+          selected: isFavorite,
           onPressed: onFavoritePressed,
-          icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-          label: Text(
-            isFavorite
-                ? context.l10n.radarFavoriteRemove
-                : context.l10n.radarFavoriteAdd,
-          ),
         ),
       ],
+    );
+  }
+}
+
+/// A 56 dp circle — hairline when off, lit amber when on — with its label below.
+class _RoundControl extends StatelessWidget {
+  const _RoundControl({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final ButtonStyle style = IconButton.styleFrom(
+      fixedSize: const Size.square(56),
+      side: selected ? null : BorderSide(color: context.colors.outlineVariant),
+      backgroundColor: selected ? context.colors.primary : Colors.transparent,
+      foregroundColor: selected
+          ? context.colors.onPrimary
+          : context.colors.onSurface,
+    );
+
+    return SizedBox(
+      width: 112,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          IconButton(
+            onPressed: onPressed,
+            style: style,
+            icon: Icon(icon),
+            tooltip: label,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: context.texts.labelMedium?.copyWith(
+              color: onPressed == null
+                  ? context.colors.outline
+                  : context.colors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

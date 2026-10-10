@@ -51,6 +51,7 @@
   "finderMetaBattery": "{percent}%",
   "finderMetaPaired": "Paired",
   "finderMetaSlowSignal": "Slow signal",
+  "finderScaleHint": "Each dot is a device. Move around and watch which one drifts to the right.",
   "finderMetaPairable": "Pairable",
   "finderTraitFastPair": "Fast Pair",
   "finderTraitSwiftPair": "Swift Pair",
