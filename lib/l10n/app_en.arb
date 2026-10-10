@@ -50,6 +50,7 @@
 
   "finderMetaBattery": "{percent}%",
   "finderMetaPaired": "Paired",
+  "finderMetaSlowSignal": "Slow signal",
   "finderMetaPairable": "Pairable",
   "finderTraitFastPair": "Fast Pair",
   "finderTraitSwiftPair": "Swift Pair",
@@ -69,6 +70,7 @@
   "radarBandNear": "Close",
   "radarBandVeryNear": "Very close",
   "radarHint": "Walk slowly: if the percentage goes up, you are getting warmer.",
+  "radarSlowSignalHint": "This device uses classic Bluetooth: the signal updates every 10-15 seconds. Take a few steps and wait for it to change.",
   "radarSearchingTitle": "Looking for a signal…",
   "radarSearchingMessage": "Scanning for this device again.",
   "radarSignalLostTitle": "No signal from this device",

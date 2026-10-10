@@ -67,6 +67,25 @@ class DeviceIdentity {
   /// 3. **Advertised services** — standards-based and unambiguous, but a device
   ///    only lists the services it feels like listing.
   /// 4. **The advertised name** — guesswork, so it goes last.
+  /// Identity of a Bluetooth classic device found by an inquiry.
+  ///
+  /// Classic discovery carries far less than a BLE advertisement: a name, when
+  /// the device answers with one, and its Class of Device. No brand, no
+  /// battery, no traits.
+  factory DeviceIdentity.fromClassic({
+    required String name,
+    required int deviceClass,
+  }) {
+    return DeviceIdentity(
+      advertisedName: name,
+      category: _firstKnown(<DeviceCategory>[
+        BluetoothRegistry.categoryForClassOfDevice(deviceClass),
+        BluetoothRegistry.categoryForName(name),
+      ]),
+      connectable: true,
+    );
+  }
+
   factory DeviceIdentity.resolve(AdvertisementFacts facts) {
     final Set<DeviceTrait> traits = <DeviceTrait>{
       ...BluetoothRegistry.traitsForServices(facts.serviceUuids),

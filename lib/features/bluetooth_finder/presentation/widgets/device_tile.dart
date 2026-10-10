@@ -110,6 +110,7 @@ class DeviceTile extends StatelessWidget {
                     DeviceMetaChips(
                       identity: identity,
                       isPaired: device.isPaired,
+                      isSlowSignal: device.isSlowSignal,
                       // Two, not three: a third chip wraps to a second line on
                       // a narrow phone, and that line would be the one row in
                       // the list that is taller than the rest.

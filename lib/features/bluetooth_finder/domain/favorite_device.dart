@@ -19,6 +19,7 @@ class FavoriteDevice {
     required this.id,
     required this.identity,
     this.customName,
+    this.isClassic = false,
   });
 
   /// Same identifier as [DiscoveredDevice.id]: the MAC on Android, a
@@ -40,6 +41,11 @@ class FavoriteDevice {
   /// and it survives a re-pin.
   final String? customName;
 
+  /// Last heard through Bluetooth classic. Kept so the radar can give it the
+  /// patience a ~12 s inquiry needs even when it opens with the device out of
+  /// range.
+  final bool isClassic;
+
   /// Keeps the name, the model, the brand and the kind; drops everything that
   /// only describes the packet it came from.
   factory FavoriteDevice.fromDiscovered(
@@ -49,6 +55,7 @@ class FavoriteDevice {
     return FavoriteDevice(
       id: device.id,
       customName: customName,
+      isClassic: device.isSlowSignal,
       identity: DeviceIdentity(
         advertisedName: device.identity.advertisedName,
         modelName: device.identity.modelName,
@@ -62,6 +69,7 @@ class FavoriteDevice {
   FavoriteDevice renamedTo(String? name) => FavoriteDevice(
     id: id,
     identity: identity,
+    isClassic: isClassic,
     customName: (name != null && name.trim().isNotEmpty) ? name.trim() : null,
   );
 
@@ -75,6 +83,7 @@ class FavoriteDevice {
     // an index would silently re-label every stored favourite the day a
     // category is inserted in the middle.
     _categoryKey: identity.category.name,
+    if (isClassic) _classicKey: true,
   };
 
   /// Returns `null` for anything that does not read back as a favourite —
@@ -91,6 +100,7 @@ class FavoriteDevice {
 
     return FavoriteDevice(
       id: id,
+      isClassic: json[_classicKey] == true,
       customName: custom is String && custom.trim().isNotEmpty
           ? custom.trim()
           : null,
@@ -120,6 +130,7 @@ class FavoriteDevice {
   static const String _modelKey = 'model';
   static const String _vendorKey = 'vendor';
   static const String _categoryKey = 'category';
+  static const String _classicKey = 'classic';
 
   @override
   bool operator ==(Object other) =>
@@ -127,8 +138,9 @@ class FavoriteDevice {
       other is FavoriteDevice &&
           other.id == id &&
           other.identity == identity &&
-          other.customName == customName;
+          other.customName == customName &&
+          other.isClassic == isClassic;
 
   @override
-  int get hashCode => Object.hash(id, identity, customName);
+  int get hashCode => Object.hash(id, identity, customName, isClassic);
 }

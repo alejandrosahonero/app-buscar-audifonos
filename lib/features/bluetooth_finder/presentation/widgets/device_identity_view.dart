@@ -165,6 +165,7 @@ class DeviceMetaChips extends StatelessWidget {
   const DeviceMetaChips({
     required this.identity,
     this.isPaired = false,
+    this.isSlowSignal = false,
     this.maxChips = 3,
     this.alignment = WrapAlignment.start,
     this.gapAbove = 0,
@@ -173,6 +174,10 @@ class DeviceMetaChips extends StatelessWidget {
 
   final DeviceIdentity identity;
   final bool isPaired;
+
+  /// Heard through Bluetooth classic: first chip, because it explains why the
+  /// reading moves in steps instead of smoothly.
+  final bool isSlowSignal;
   final int maxChips;
   final WrapAlignment alignment;
 
@@ -204,6 +209,11 @@ class DeviceMetaChips extends StatelessWidget {
     final int? battery = identity.batteryPercent;
 
     return <Widget>[
+      if (isSlowSignal)
+        DeviceMetaChip(
+          icon: Icons.hourglass_bottom,
+          label: context.l10n.finderMetaSlowSignal,
+        ),
       if (battery != null)
         DeviceMetaChip(
           icon: Icons.battery_full,

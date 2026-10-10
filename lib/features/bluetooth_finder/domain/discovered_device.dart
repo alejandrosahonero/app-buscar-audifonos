@@ -15,6 +15,7 @@ class DiscoveredDevice {
     required this.smoothedRssi,
     required this.lastSeen,
     this.isPaired = false,
+    this.isSlowSignal = false,
   });
 
   /// Stable identifier: the MAC address on Android, a system-assigned UUID on
@@ -30,6 +31,11 @@ class DiscoveredDevice {
   /// Already paired with this phone. Almost always the device being hunted for,
   /// so the list badges it.
   final bool isPaired;
+
+  /// Heard through Bluetooth classic discovery instead of BLE. An inquiry takes
+  /// ~12 s and the device answers once per inquiry, so its reading moves in
+  /// slow steps: the UI says so, or the radar would look broken.
+  final bool isSlowSignal;
 
   /// Latest raw reading, in dBm. Always negative; closer to zero means closer.
   final int rssi;
@@ -58,12 +64,17 @@ class DiscoveredDevice {
   }) {
     return DiscoveredDevice(
       id: id,
+      isSlowSignal: isSlowSignal,
       // Descriptions arrive piecemeal in BLE — never let a packet that omits
       // the name or the services erase what we already resolved.
       identity: this.identity.mergedWith(identity),
       isPaired: isPaired,
       rssi: rssi,
-      smoothedRssi: Proximity.smooth(smoothedRssi, rssi),
+      // A classic reading is already one sample per ~12 s: averaging it with
+      // the previous one would make each step take half a minute to show.
+      smoothedRssi: isSlowSignal
+          ? rssi.toDouble()
+          : Proximity.smooth(smoothedRssi, rssi),
       lastSeen: lastSeen,
     );
   }
@@ -76,11 +87,13 @@ class DiscoveredDevice {
     required int rssi,
     required DateTime lastSeen,
     bool isPaired = false,
+    bool isSlowSignal = false,
   }) {
     return DiscoveredDevice(
       id: id,
       identity: identity,
       isPaired: isPaired,
+      isSlowSignal: isSlowSignal,
       rssi: rssi,
       smoothedRssi: rssi.toDouble(),
       lastSeen: lastSeen,
@@ -94,11 +107,19 @@ class DiscoveredDevice {
           other.id == id &&
           other.identity == identity &&
           other.isPaired == isPaired &&
+          other.isSlowSignal == isSlowSignal &&
           other.rssi == rssi &&
           other.smoothedRssi == smoothedRssi &&
           other.lastSeen == lastSeen;
 
   @override
-  int get hashCode =>
-      Object.hash(id, identity, isPaired, rssi, smoothedRssi, lastSeen);
+  int get hashCode => Object.hash(
+    id,
+    identity,
+    isPaired,
+    isSlowSignal,
+    rssi,
+    smoothedRssi,
+    lastSeen,
+  );
 }

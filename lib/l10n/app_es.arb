@@ -93,6 +93,7 @@
     }
   },
   "finderMetaPaired": "Vinculado",
+  "finderMetaSlowSignal": "Señal lenta",
   "finderMetaPairable": "Emparejable",
   "finderTraitFastPair": "Fast Pair",
   "finderTraitSwiftPair": "Swift Pair",
@@ -123,6 +124,7 @@
   "radarBandNear": "Cerca",
   "radarBandVeryNear": "Muy cerca",
   "radarHint": "Camina despacio: si el porcentaje sube, vas bien.",
+  "radarSlowSignalHint": "Este dispositivo usa Bluetooth clásico: la señal se actualiza cada 10-15 segundos. Da unos pasos y espera a que cambie.",
   "radarSearchingTitle": "Buscando señal…",
   "@radarSearchingTitle": {
     "description": "El radar acaba de reanudar el escaneo y aún no ha oído al dispositivo"

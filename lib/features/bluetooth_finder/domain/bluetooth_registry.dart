@@ -204,6 +204,50 @@ abstract final class BluetoothRegistry {
   };
 
   // --------------------------------------------------------------------
+  // Class of Device (Bluetooth classic)
+  // --------------------------------------------------------------------
+
+  /// Maps a classic Class of Device — major and minor class, the value Android
+  /// returns from `BluetoothClass.getDeviceClass()` — onto a category.
+  ///
+  /// The classic counterpart of [categoryForAppearance]: a value the
+  /// manufacturer picked from the SIG's assigned numbers, so it outranks any
+  /// guess from the name.
+  static DeviceCategory categoryForClassOfDevice(int deviceClass) {
+    final int major = deviceClass & 0x1F00;
+    switch (major) {
+      case 0x0100:
+        return DeviceCategory.computer;
+      case 0x0200:
+        return DeviceCategory.phone;
+      case 0x0400:
+        return switch (deviceClass & 0x1FFC) {
+          0x0404 => DeviceCategory.earbuds, // wearable headset
+          0x0408 ||
+          0x0418 => DeviceCategory.headphones, // hands-free, headphones
+          0x0414 || 0x0428 || 0x041C => DeviceCategory.speaker,
+          0x0420 => DeviceCategory.carKit,
+          0x043C || 0x0438 => DeviceCategory.tv,
+          _ => DeviceCategory.unknown,
+        };
+      case 0x0500:
+        if (deviceClass & 0x0080 != 0) return DeviceCategory.mouse;
+        if (deviceClass & 0x0040 != 0) return DeviceCategory.keyboard;
+        return switch (deviceClass & 0x1FFC) {
+          0x0504 || 0x0508 => DeviceCategory.gamepad,
+          _ => DeviceCategory.unknown,
+        };
+      case 0x0700:
+        return deviceClass & 0x1FFC == 0x0704
+            ? DeviceCategory.watch
+            : DeviceCategory.unknown;
+      case 0x0900:
+        return DeviceCategory.healthSensor;
+    }
+    return DeviceCategory.unknown;
+  }
+
+  // --------------------------------------------------------------------
   // GAP appearance
   // --------------------------------------------------------------------
 

@@ -83,6 +83,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   /// at this screen hardest.
   DeviceIdentity? _lastKnownIdentity;
   bool _lastKnownPaired = false;
+
+  /// The device was last heard through Bluetooth classic. Its first answer
+  /// after a scan restart can take a whole inquiry (~12 s), so for a while its
+  /// absence means "still listening", not "switched off".
+  bool _lastKnownSlow = false;
+  bool _slowGraceActive = false;
+  Timer? _slowGraceTimer;
   bool _soundOn = false;
   bool _reviewRequested = false;
 
@@ -99,6 +106,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     );
     _lastKnownIdentity = current?.identity ?? _savedIdentity();
     _lastKnownPaired = current?.isPaired ?? false;
+    _lastKnownSlow = current?.isSlowSignal ?? _savedIsClassic();
+
+    // Tells the scanner which device matters: classic discovery competes with
+    // BLE for the radio and is paused while a BLE device is being followed.
+    _scanService.focusOn(widget.deviceId);
 
     // Decided before the first frame: with the scan stopped, `current` is the
     // last packet from whenever the user pressed Stop. Its percentage would
@@ -124,6 +136,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   @override
   void dispose() {
     // Covers both exits: the app bar arrow and the system back gesture.
+    _slowGraceTimer?.cancel();
+    _scanService.focusOn(null);
     if (_stopScanOnLeave) unawaited(_scanService.stop());
     unawaited(_sounder.dispose());
     super.dispose();
@@ -171,6 +185,17 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
           ? _RadarBacking.live
           : _RadarBacking.noScan,
     );
+    if (_backing == _RadarBacking.live && _lastKnownSlow) _startSlowGrace();
+  }
+
+  /// One full inquiry plus margin. Until then a missing classic device is
+  /// reported as "searching", never as "switched off".
+  void _startSlowGrace() {
+    _slowGraceTimer?.cancel();
+    setState(() => _slowGraceActive = true);
+    _slowGraceTimer = Timer(const Duration(seconds: 15), () {
+      if (mounted) setState(() => _slowGraceActive = false);
+    });
   }
 
   @override
@@ -227,7 +252,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             children: <Widget>[
-              _IdentityHeader(identity: identity, isPaired: _lastKnownPaired),
+              _IdentityHeader(
+                identity: identity,
+                isPaired: _lastKnownPaired,
+                isSlowSignal: _lastKnownSlow,
+              ),
               const SizedBox(height: AppSpacing.md),
               Expanded(
                 child: Center(
@@ -240,7 +269,9 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               const SizedBox(height: AppSpacing.md),
               _Readout(
                 device: device,
-                isSearching: _backing == _RadarBacking.restarting,
+                isSearching:
+                    _backing == _RadarBacking.restarting ||
+                    (_slowGraceActive && device == null),
               ),
               const SizedBox(height: AppSpacing.md),
               _Controls(
@@ -264,12 +295,14 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   /// moment the device stops advertising.
   void _rememberIdentity(DiscoveredDevice device) {
     if (device.identity == _lastKnownIdentity &&
-        device.isPaired == _lastKnownPaired) {
+        device.isPaired == _lastKnownPaired &&
+        device.isSlowSignal == _lastKnownSlow) {
       return;
     }
     setState(() {
       _lastKnownIdentity = device.identity;
       _lastKnownPaired = device.isPaired;
+      _lastKnownSlow = device.isSlowSignal;
     });
   }
 
@@ -293,6 +326,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       if (favorite.id == widget.deviceId) return favorite.identity;
     }
     return null;
+  }
+
+  bool _savedIsClassic() {
+    for (final FavoriteDevice favorite in ref.read(favoriteDevicesProvider)) {
+      if (favorite.id == widget.deviceId) return favorite.isClassic;
+    }
+    return false;
   }
 
   /// Rewarded flow, in the order the project guide mandates:
@@ -419,10 +459,15 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
 /// hardware and tells a person nothing they can use, so it was replaced by the
 /// facts they can: kind, brand, battery, whether it is already theirs.
 class _IdentityHeader extends StatelessWidget {
-  const _IdentityHeader({required this.identity, required this.isPaired});
+  const _IdentityHeader({
+    required this.identity,
+    required this.isPaired,
+    required this.isSlowSignal,
+  });
 
   final DeviceIdentity identity;
   final bool isPaired;
+  final bool isSlowSignal;
 
   @override
   Widget build(BuildContext context) {
@@ -444,6 +489,7 @@ class _IdentityHeader extends StatelessWidget {
         DeviceMetaChips(
           identity: identity,
           isPaired: isPaired,
+          isSlowSignal: isSlowSignal,
           maxChips: 4,
           alignment: WrapAlignment.center,
         ),
@@ -491,7 +537,11 @@ class _Readout extends StatelessWidget {
     }
 
     return Text(
-      context.l10n.radarHint,
+      // A classic device moves in ~12 s steps. Without saying so, walking and
+      // seeing nothing change reads as "the app is broken".
+      device.isSlowSignal
+          ? context.l10n.radarSlowSignalHint
+          : context.l10n.radarHint,
       textAlign: TextAlign.center,
       style: context.texts.bodySmall?.copyWith(
         color: context.colors.onSurfaceVariant,

@@ -125,10 +125,29 @@ los pide `ScannerScreen` con `PermissionFlow.ensureAll` antes de llamar a
 | Media móvil (EMA, factor 0,35) en el servicio | El RSSI crudo oscila 10-15 dBm en reposo. Se suaviza **una vez** en el servicio, así lista y radar comparten el mismo valor |
 | Escaneo detenido en `onPause` (`AppLifecycleListener`) | Un scan `lowLatency` es de lo más caro que puede hacerle una app a la batería |
 
-> ⚠️ **Solo BLE.** `flutter_blue_plus` escanea *Low Energy*; no hay API para leer
-> el RSSI de un descubrimiento clásico (BR/EDR). Los auriculares modernos
-> anuncian por BLE aunque el audio vaya por clásico, que es lo que hace que el
-> radar funcione con ellos. Un manos libres solo-clásico **no** aparecerá.
+> **BLE primero, clásico como respaldo lento.** `flutter_blue_plus` solo escanea
+> *Low Energy*, que es lo que anuncian los auriculares modernos aunque el audio
+> vaya por clásico. Los dispositivos **solo-clásico** (BR/EDR) los encuentra la
+> búsqueda propia de Android, a través de un canal nativo sin dependencias
+> (`android/.../ClassicDiscovery.kt`, `EventChannel`
+> `buscaraudifonos/classic_discovery`): escuchar el canal arranca un bucle de
+> búsquedas y cancelarlo lo para.
+>
+> - **Se etiquetan "Señal lenta"** (`DiscoveredDevice.isSlowSignal`): una búsqueda
+>   dura ~12 s y cada dispositivo contesta una vez por búsqueda. Sin la etiqueta
+>   el radar parece roto. Su lectura **no se promedia** (cada muestra ya llega
+>   con 12 s de retraso) y aguantan **40 s** sin contestar antes de salir de la lista.
+> - **Solo aparecen si son visibles** (modo emparejamiento, normalmente). Unos
+>   auriculares perdidos y apagados no lo están: esto amplía la cobertura, no
+>   la garantiza.
+> - **La búsqueda clásica se pausa mientras el radar sigue a un dispositivo BLE**
+>   (`BluetoothScanService.focusOn`): comparte la radio y le quitaría lecturas
+>   justo al dispositivo que el usuario busca.
+> - Un dispositivo visto por las dos vías sale **una sola vez, como BLE**. Los
+>   que la búsqueda clásica reporta como solo-LE se descartan.
+> - El radar le da **15 s de margen** antes de decir "sin señal" (la primera
+>   respuesta puede tardar una búsqueda entera), y el favorito guarda
+>   `isClassic` para dárselo también cuando se abre con el dispositivo apagado.
 
 > ⚠️ **`flutter_blue_plus` está fijado a `1.36.8` a propósito.** La 2.0.0 abandonó
 > BSD-3 por una licencia que exige pago para uso comercial (esta app lo es). No

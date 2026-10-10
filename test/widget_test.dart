@@ -79,6 +79,11 @@ class _FakeScanService implements BluetoothScanService {
     _scanning.add(false);
   }
 
+  String? focusedId;
+
+  @override
+  void focusOn(String? deviceId) => focusedId = deviceId;
+
   @override
   Future<void> requestEnable() async {}
 

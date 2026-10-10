@@ -5,6 +5,7 @@ import 'package:buscar_audifonos/features/bluetooth_finder/data/advertisement_ma
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/device_identity.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 /// State of the Bluetooth radio, normalized so no UI code has to import the
@@ -34,14 +35,22 @@ enum BluetoothAvailability {
 /// template's `PermissionService` / `PermissionFlow` split. That keeps this
 /// class testable and callable from non-UI code.
 ///
-/// ## Scope: BLE only
+/// ## BLE first, classic as a slow fallback
 ///
-/// `flutter_blue_plus` scans Bluetooth **Low Energy** advertisements. Android
-/// exposes no API to read the RSSI of a classic (BR/EDR) discovery through it,
-/// so classic-only headsets will not appear here. In practice modern earbuds
-/// and headphones advertise over BLE even while their audio link is classic,
-/// which is what makes the radar work for them. [bondedDeviceIds] is provided
-/// so the UI can at least mark already-paired devices.
+/// `flutter_blue_plus` scans Bluetooth **Low Energy** advertisements, which is
+/// what modern earbuds broadcast even while their audio link is classic, and
+/// what gives the radar several readings a second.
+///
+/// A device that speaks classic Bluetooth only is picked up by Android's own
+/// inquiry, through `ClassicDiscovery` on the Kotlin side. One inquiry lasts
+/// ~12 s and each device answers once per inquiry, so those devices are marked
+/// [DiscoveredDevice.isSlowSignal]. And it only finds devices that are
+/// discoverable — in pairing mode, typically — which a lost headset often is
+/// not.
+///
+/// Inquiry and BLE scanning share the radio, so inquiry is paused while the
+/// radar follows a BLE device ([focusOn]): that radar must not be slowed down
+/// for devices the user is not looking at.
 class BluetoothScanService {
   BluetoothScanService() {
     // `scanResults` is a re-emitting broadcast stream, but `map` runs once per
@@ -64,6 +73,10 @@ class BluetoothScanService {
   late final StreamSubscription<List<ScanResult>> _subscription;
 
   Map<String, DiscoveredDevice> _known = <String, DiscoveredDevice>{};
+  final Map<String, DiscoveredDevice> _classic = <String, DiscoveredDevice>{};
+  StreamSubscription<dynamic>? _classicSubscription;
+  bool _scanning = false;
+  String? _focusId;
   List<DiscoveredDevice> _latest = const <DiscoveredDevice>[];
   Set<String> _bonded = const <String>{};
   bool _logConfigured = false;
@@ -72,6 +85,17 @@ class BluetoothScanService {
   /// Long enough to survive a few missed packets, short enough that a device
   /// carried out of the room disappears while the user is still looking at it.
   static const Duration _gonePatience = Duration(seconds: 12);
+
+  /// The same idea for classic devices, which answer once per ~12 s inquiry and
+  /// skip some: three inquiries before giving one up.
+  static const Duration _classicGonePatience = Duration(seconds: 40);
+
+  /// `BluetoothDevice.DEVICE_TYPE_LE` on Android.
+  static const int _deviceTypeLe = 2;
+
+  static const EventChannel _classicChannel = EventChannel(
+    'buscaraudifonos/classic_discovery',
+  );
 
   /// Devices seen in the current scan, newest reading first.
   ///
@@ -127,6 +151,7 @@ class BluetoothScanService {
     }
 
     _known = <String, DiscoveredDevice>{};
+    _classic.clear();
     _emit(const <DiscoveredDevice>[]);
 
     // Read once per scan rather than per packet: the bond list only changes
@@ -151,6 +176,8 @@ class BluetoothScanService {
         // the plugin ask again would show a second prompt out of context.
         androidUsesFineLocation: false,
       );
+      _scanning = true;
+      _syncClassic();
     } on Object catch (error, stackTrace) {
       AppLogger.error(
         'startScan failed',
@@ -162,6 +189,8 @@ class BluetoothScanService {
   }
 
   Future<void> stop() async {
+    _scanning = false;
+    _syncClassic();
     try {
       await FlutterBluePlus.stopScan();
     } on Object catch (error, stackTrace) {
@@ -182,6 +211,74 @@ class BluetoothScanService {
       // The user declining the system dialog throws. Not an error.
       AppLogger.debug('turnOn refused: $error', name: 'bluetooth');
     }
+  }
+
+  /// The device the radar is following, or `null` when no radar is open.
+  ///
+  /// Inquiry halves the time the radio spends listening for BLE, so it is
+  /// paused while the radar follows a BLE device and kept running for a
+  /// classic one — which needs it to be heard at all.
+  void focusOn(String? deviceId) {
+    _focusId = deviceId;
+    _syncClassic();
+  }
+
+  void _syncClassic() {
+    final String? focus = _focusId;
+    final bool wanted =
+        _scanning &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        (focus == null || !_known.containsKey(focus));
+
+    if (wanted && _classicSubscription == null) {
+      _classicSubscription = _classicChannel.receiveBroadcastStream().listen(
+        _onClassic,
+        onError: (Object error, StackTrace stackTrace) => AppLogger.error(
+          'Classic discovery failed',
+          name: 'bluetooth',
+          error: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    } else if (!wanted && _classicSubscription != null) {
+      unawaited(_classicSubscription!.cancel());
+      _classicSubscription = null;
+    }
+  }
+
+  void _onClassic(dynamic event) {
+    if (event is! Map) return;
+    final Object? id = event['id'];
+    final Object? rssi = event['rssi'];
+    if (id is! String || rssi is! int) return;
+    // Inquiry also reports Low Energy devices on many phones. Those belong to
+    // the BLE scan, which hears them many times a second.
+    if (event['type'] == _deviceTypeLe) return;
+
+    final DeviceIdentity identity = DeviceIdentity.fromClassic(
+      name: event['name'] as String? ?? '',
+      deviceClass: event['deviceClass'] as int? ?? 0,
+    );
+    final bool isPaired = _bonded.contains(id);
+    final DateTime now = DateTime.now();
+    final DiscoveredDevice? previous = _classic[id];
+
+    _classic[id] = previous == null
+        ? DiscoveredDevice.firstSeen(
+            id: id,
+            identity: identity,
+            isPaired: isPaired,
+            isSlowSignal: true,
+            rssi: rssi,
+            lastSeen: now,
+          )
+        : previous.merge(
+            identity: identity,
+            isPaired: isPaired,
+            rssi: rssi,
+            lastSeen: now,
+          );
+    _emitAll();
   }
 
   void _onResults(List<ScanResult> results) {
@@ -212,7 +309,21 @@ class BluetoothScanService {
     }
 
     _known = next;
-    _emit(next.values.toList(growable: false));
+    _emitAll();
+    // A radar opened on a device before its first BLE packet arrived has only
+    // now learnt that it is following a BLE device.
+    if (_focusId != null) _syncClassic();
+  }
+
+  /// BLE devices plus the classic ones heard recently enough. A device seen
+  /// both ways is listed once, from BLE: it updates many times faster.
+  void _emitAll() {
+    final DateTime cutoff = DateTime.now().subtract(_classicGonePatience);
+    _classic.removeWhere(
+      (String id, DiscoveredDevice device) =>
+          device.lastSeen.isBefore(cutoff) || _known.containsKey(id),
+    );
+    _emit(<DiscoveredDevice>[..._known.values, ..._classic.values]);
   }
 
   void _emit(List<DiscoveredDevice> devices) {
@@ -234,6 +345,7 @@ class BluetoothScanService {
 
   /// Releases the platform subscription. Wired to the provider's `onDispose`.
   Future<void> dispose() async {
+    await _classicSubscription?.cancel();
     await _subscription.cancel();
     await _devices.close();
   }
