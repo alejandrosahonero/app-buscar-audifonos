@@ -3,9 +3,12 @@ description: "Encuentra tus audífonos y dispositivos Bluetooth perdidos con un 
 # Evita publicar accidentalmente la app en pub.dev.
 publish_to: "none"
 
-# versionName + versionCode. Incrementar SIEMPRE el build number (+N) en cada
-# subida a Google Play; el versionCode no puede repetirse ni retroceder.
-version: 1.0.0+1
+# versionName + versionCode. El AAB para Play lo genera GitHub Actions
+# (.github/workflows/release-aab.yml) en cada push a main: usa el versionName de
+# aquí y calcula el versionCode solo (etiquetas build-N), así que el +N de esta
+# línea solo afecta a builds locales. Para una versión visible nueva, sube el
+# versionName (1.0.0 → 1.1.0) aquí.
+version: 1.0.0+3
 
 environment:
   sdk: ^3.12.2

@@ -710,6 +710,25 @@ flutter build appbundle --release --analyze-size
 
 **Guardar `build/symbols/<versión>` fuera del repo.** Sin esos símbolos los crashes son ilegibles.
 
+### 10.1 AAB automático (GitHub Actions)
+
+`.github/workflows/release-aab.yml` corre **en cada push a `main`** (y a mano con
+*Run workflow*): analiza, testea, compila el AAB firmado y ofuscado, comprueba
+que **no** va firmado con la clave de debug y lo deja en *Artifacts* junto a los
+símbolos y el `mapping.txt`.
+
+- **versionCode automático**: cada build correcto etiqueta su commit `build-N` y
+  el siguiente usa el mayor N + 1 (mínimo `MIN_VERSION_CODE` = 4, porque la 3 ya
+  está en Play). Un build fallido no gasta número. **No borrar esas etiquetas**:
+  son el contador. Si alguna vez se sube a Play un AAB hecho a mano, crear la
+  etiqueta `build-<su versionCode>` para que el siguiente no choque.
+- **versionName** sale de `pubspec.yaml`: súbelo ahí cuando quieras que el usuario
+  vea una versión nueva.
+- **Secrets necesarios**: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+  `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS`; opcional
+  `GOOGLE_SERVICES_JSON_BASE64` (sin él, el build funciona pero sin Crashlytics).
+  Sin los de firma el workflow falla a propósito: un AAB de debug no sirve.
+
 ---
 
 ## 11. Pasar a producción — checklist del template
