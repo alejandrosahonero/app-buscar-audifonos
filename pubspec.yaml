@@ -1,6 +1,6 @@
 name: buscar_audifonos
-description: "Plantilla base modular en Flutter para desarrollo rápido de aplicaciones Android. Incluye integración de Google AdMob, gestión de permisos Android 12+, tematización Material 3 y arquitectura escalable."
-# Evita publicar accidentalmente la plantilla en pub.dev.
+description: "Encuentra tus audífonos y dispositivos Bluetooth perdidos con un radar de proximidad y un sonido que se acelera al acercarte."
+# Evita publicar accidentalmente la app en pub.dev.
 publish_to: "none"
 
 # versionName + versionCode. Incrementar SIEMPRE el build number (+N) en cada

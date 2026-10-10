@@ -49,8 +49,6 @@ lib/
 │   │   │                     # DeviceIdentity + BluetoothRegistry (ver §1.2),
 │   │   │                     # FavoriteDevice (ver §1.3)
 │   │   └── presentation/     # ScannerScreen (home), RadarScreen, providers
-│   ├── home/presentation/    # feature de ejemplo de la plantilla (HUÉRFANA:
-│   │                         # ya no está enrutada, ver §1.1)
 │   ├── settings/presentation/
 │   └── premium/presentation/ # paywall
 ├── services/
@@ -75,10 +73,10 @@ Localizador de audífonos y dispositivos Bluetooth. Es la única feature con las
 tres capas (`data` / `domain` / `presentation`), porque es la única con lógica
 de negocio real.
 
-**La ruta `/` apunta a `ScannerScreen`,** no a la `HomeScreen` de la plantilla.
-`lib/features/home/` quedó huérfana (no la importa nadie): es andamiaje de
-demo y puede borrarse. Sus integraciones (interstitial tras acción de valor y
-`requestReviewAfterSuccess`) ya están portadas a esta feature.
+**La ruta `/` apunta a `ScannerScreen`.** La feature de demo de la plantilla
+(`home/`: créditos, tareas, tarjeta de permisos) se borró junto con sus textos;
+sus integraciones (interstitial tras acción de valor y
+`requestReviewAfterSuccess`) viven en esta feature.
 
 ### Rutas
 
@@ -232,6 +230,7 @@ Decisiones que conviene no deshacer:
 Rango útil **-100 dBm → -30 dBm** mapeado a 0-100 %. **No se muestra distancia en
 metros**: el RSSI depende de cuerpos, paredes y potencia del emisor, así que se
 enseña una cercanía relativa que el usuario "escala" caminando.
+**Tampoco se muestran los dBm**: es un dato técnico que no ayuda a buscar.
 Bandas: `far` (<40 %) rojo, `near` (40-72 %) ámbar, `veryNear` (≥72 %) verde,
 resueltas en un solo sitio (`proximityColor` en `signal_strength_icon.dart`).
 
@@ -354,7 +353,7 @@ Convenciones aplicadas en el repo:
 
 - **Estados de UI con `sealed class`**, nunca booleanos sueltos. Ver `services/billing/premium_state.dart` (`PurchaseFlow` → `PurchaseIdle` / `PurchasePending` / `PurchaseFailed`). La dimensión carga/error la aporta `AsyncValue`.
 - **`ref.read` dentro de callbacks; `ref.watch` solo en `build`.** Ejemplo: `AdsService` recibe `isPremium: () => ref.read(isPremiumProvider)`.
-- **`select` para observar solo lo que se pinta**: `homeControllerProvider.select((s) => s.credits)`.
+- **`select` para observar solo lo que se pinta**: `provider.select((s) => s.campo)` cuando el widget solo usa una parte del estado.
 - **`autoDispose`**: en Riverpod 3 se activa con `isAutoDispose: true`. Los providers de servicios (`adsServiceProvider`, `premiumControllerProvider`, `routerProvider`) son **keepAlive a propósito** y cada uno lleva el comentario que lo justifica (mantienen anuncios precargados, la suscripción al `purchaseStream` y la pila de navegación).
 
 ### ⚠️ Desviación conocida: sin `riverpod_generator` / `riverpod_lint`
@@ -420,11 +419,11 @@ Un ID vacío **desactiva** ese formato en vez de romper (`canShowBanner` /
 `AppConfig.interstitialEveryNActions` (3) **y** `AppConfig.minIntervalBetweenInterstitials` (3 min).
 No añadir atajos que salten el pacing.
 
-**Flujo rewarded correcto** (implementado en `features/home/.../rewards_card.dart`):
+**Flujo rewarded correcto** (implementado en `RadarScreen._addToFavorites`, §1.3):
 1. Diálogo previo explicando la recompensa → el usuario acepta.
 2. `AdsService.showRewarded(...)`.
 3. La recompensa se entrega **solo** dentro de `onUserEarnedReward`.
-4. Se persiste inmediatamente (`HomeController.addCredits`).
+4. Se persiste inmediatamente (`FavoritesController.add`).
 5. Si no hay anuncio → snackbar informativo, nunca un callejón sin salida.
 
 **Consentimiento (UMP).** `services/ads/consent_service.dart` usa el UMP SDK que ya incluye `google_mobile_ads` (sin dependencia extra):
@@ -483,11 +482,11 @@ Poner `showBanner: false` en pantallas con controles densos, formularios, onboar
 
 `services/review/review_service.dart`. Google limita el diálogo silenciosamente: si se gasta la cuota en un mal momento, el usuario no lo vuelve a ver en meses. Por eso hay tres guardas (`AppConfig`):
 
-- `reviewMinSuccessfulActions` = 5 acciones de valor completadas.
-- `reviewMinAppAge` = 3 días desde la instalación.
+- `reviewMinSuccessfulActions` = 1 dispositivo encontrado. Es una app de uso esporádico: casi nadie llega a encontrar cinco cosas.
+- `reviewMinAppAge` = 0. La gente instala la app *mientras* busca, así que el primer hallazgo suele ser el primer día, y es el mejor momento que habrá.
 - `reviewMinInterval` = 120 días entre solicitudes.
 
-`requestReviewAfterSuccess()` se llama **solo tras un éxito** (`TaskCard._completeTask`). Nunca al arrancar, nunca tras un error, nunca desde Ajustes.
+`requestReviewAfterSuccess()` se llama **solo tras un éxito**: al llegar a la banda `veryNear` en el radar (`RadarScreen._maybeRequestReview`), es decir, cuando el usuario acaba de encontrar lo que había perdido. Nunca al arrancar, nunca tras un error, nunca desde Ajustes.
 Para el botón explícito "Valorar la aplicación" de Ajustes se usa `openStoreListing()`, que no consume la cuota del diálogo nativo.
 
 ---

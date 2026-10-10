@@ -10,63 +10,12 @@
   "commonContinue": "Continuar",
   "commonRemove": "Quitar",
   "commonNotNow": "Ahora no",
-  "commonRetry": "Reintentar",
-  "commonClose": "Cerrar",
   "commonErrorGeneric": "Algo ha salido mal. Inténtalo de nuevo.",
 
-  "homeTitle": "Inicio",
-  "homeSubtitle": "Plantilla base con AdMob, permisos, reseñas y compras integradas.",
-  "homeCounterLabel": "Acciones completadas: {count}",
-  "@homeCounterLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "homeCompleteTask": "Completar tarea",
-  "homeTaskDone": "Tarea completada",
-
-  "rewardsTitle": "Recompensas",
-  "rewardsBalance": "Créditos disponibles: {credits}",
-  "@rewardsBalance": {
-    "placeholders": {
-      "credits": {
-        "type": "int"
-      }
-    }
-  },
-  "rewardsWatchAd": "Ver anuncio y ganar {amount} créditos",
-  "@rewardsWatchAd": {
-    "placeholders": {
-      "amount": {
-        "type": "int"
-      }
-    }
-  },
-  "rewardsDialogTitle": "¿Quieres {amount} créditos?",
-  "@rewardsDialogTitle": {
-    "placeholders": {
-      "amount": {
-        "type": "int"
-      }
-    }
-  },
-  "rewardsDialogBody": "Verás un vídeo corto y al terminarlo recibirás la recompensa.",
-  "rewardsEarned": "¡Has ganado {amount} créditos!",
-  "@rewardsEarned": {
-    "placeholders": {
-      "amount": {
-        "type": "int"
-      }
-    }
-  },
   "rewardsAdUnavailable": "No hay vídeo disponible ahora mismo. Inténtalo más tarde.",
 
   "finderScanStart": "Escanear",
   "finderScanStop": "Detener",
-  "finderScanningTitle": "Buscando dispositivos…",
-  "finderScanningMessage": "Mantén el móvil en la mano y muévete despacio por la habitación.",
   "finderEmptyTitle": "Pulsa para buscar dispositivos",
   "@finderEmptyTitle": {
     "description": "Estado vacío de la lista mientras no se ha escaneado todavía"
@@ -170,18 +119,6 @@
   "finderPermissionReason": "Para localizar tus audífonos necesitamos buscar dispositivos Bluetooth cercanos. Android exige además el permiso de ubicación para poder escanear; la app no guarda ni comparte tu posición.",
   "finderPermissionRequired": "Sin los permisos de Bluetooth no podemos buscar dispositivos.",
 
-  "radarSignalReading": "{rssi} dBm (media {average} dBm)",
-  "@radarSignalReading": {
-    "description": "Lectura cruda y suavizada de la señal",
-    "placeholders": {
-      "rssi": {
-        "type": "int"
-      },
-      "average": {
-        "type": "int"
-      }
-    }
-  },
   "radarBandFar": "Lejos",
   "radarBandNear": "Cerca",
   "radarBandVeryNear": "Muy cerca",
@@ -201,38 +138,13 @@
   "radarFavoriteDialogBody": "Para añadirlo a favoritos tendrás que ver un vídeo corto. Después aparecerá siempre en la parte superior de la pantalla principal, aunque esté apagado o fuera de alcance.",
   "radarFavoriteAdded": "Añadido a favoritos.",
 
-  "permissionsTitle": "Permisos",
-  "permissionBluetooth": "Bluetooth",
-  "permissionLocation": "Ubicación",
-  "permissionNotifications": "Notificaciones",
-  "permissionBluetoothReason": "Necesitamos Bluetooth para buscar y conectar con dispositivos cercanos.",
-  "permissionLocationReason": "Necesitamos tu ubicación para mostrarte resultados cercanos.",
-  "permissionNotificationsReason": "Activa las notificaciones para avisarte cuando termine un proceso.",
   "permissionRationaleTitle": "Permiso necesario",
   "permissionDeniedForeverTitle": "Permiso bloqueado",
   "permissionDeniedForeverBody": "Has denegado este permiso permanentemente. Ábrelo desde los ajustes del sistema para poder usar esta función.",
   "permissionOpenSettings": "Abrir ajustes",
-  "permissionGranted": "Permiso de {permission} concedido",
-  "@permissionGranted": {
-    "placeholders": {
-      "permission": {
-        "type": "String"
-      }
-    }
-  },
-  "permissionDenied": "Permiso de {permission} denegado",
-  "@permissionDenied": {
-    "placeholders": {
-      "permission": {
-        "type": "String"
-      }
-    }
-  },
-  "permissionUnsupported": "Este permiso no aplica en esta versión de Android",
 
   "settingsTitle": "Ajustes",
   "settingsAppearance": "Apariencia",
-  "settingsThemeMode": "Tema",
   "settingsThemeSystem": "Sistema",
   "settingsThemeLight": "Claro",
   "settingsThemeDark": "Oscuro",

@@ -490,24 +490,12 @@ class _Readout extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: <Widget>[
-        Text(
-          context.l10n.radarSignalReading(
-            device.rssi,
-            device.smoothedRssi.round(),
-          ),
-          style: context.texts.bodyMedium,
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          context.l10n.radarHint,
-          textAlign: TextAlign.center,
-          style: context.texts.bodySmall?.copyWith(
-            color: context.colors.onSurfaceVariant,
-          ),
-        ),
-      ],
+    return Text(
+      context.l10n.radarHint,
+      textAlign: TextAlign.center,
+      style: context.texts.bodySmall?.copyWith(
+        color: context.colors.onSurfaceVariant,
+      ),
     );
   }
 }
