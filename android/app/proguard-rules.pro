@@ -49,3 +49,9 @@
 -keep class androidx.work.impl.WorkDatabase_Impl { *; }
 -keep class androidx.work.** { *; }
 -dontwarn androidx.work.**
+
+# --- flutter_blue_plus ----------------------------------------------------
+# The plugin reads its scan settings by reflection. Renamed by R8, startScan
+# throws "Field androidScanMode_ ... not found" in release only: the scan
+# button flickers and nothing is ever found. Rule from the plugin's README.
+-keep class com.lib.flutter_blue_plus.** { *; }

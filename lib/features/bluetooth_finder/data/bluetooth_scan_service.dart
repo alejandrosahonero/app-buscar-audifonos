@@ -175,6 +175,12 @@ class BluetoothScanService {
         // bundled with the Bluetooth group in a single dialog sequence. Letting
         // the plugin ask again would show a second prompt out of context.
         androidUsesFineLocation: false,
+        // On by default, it makes startScan throw whenever the phone's
+        // location toggle is off — the scan button flickers and nothing is
+        // ever found. Android 12+ scans without it (BLUETOOTH_SCAN is
+        // neverForLocation); Android 11 and older still need location on to
+        // deliver results, but the scan itself no longer fails.
+        androidCheckLocationServices: false,
       );
       _scanning = true;
       _syncClassic();
