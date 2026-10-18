@@ -13,6 +13,7 @@ import 'package:buscar_audifonos/features/bluetooth_finder/domain/proximity.dart
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/favorites_controller.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/location_services_prompt.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/radar_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/signal_strength_icon.dart';
 import 'package:buscar_audifonos/services/ads/ads_providers.dart';
@@ -175,6 +176,21 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       // longer change.
       setState(() => _backing = _RadarBacking.noScan);
       context.showSnack(context.l10n.finderPermissionRequired);
+      return;
+    }
+
+    if (!await LocationServicesPrompt.ensure(
+      context,
+      service: ref.read(locationServicesProvider),
+    )) {
+      if (mounted) setState(() => _backing = _RadarBacking.noScan);
+      return;
+    }
+
+    if (ref.read(bluetoothAvailabilityProvider).value ==
+            BluetoothAvailability.off &&
+        !await _scanService.requestEnable()) {
+      if (mounted) setState(() => _backing = _RadarBacking.noScan);
       return;
     }
 

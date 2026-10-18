@@ -66,6 +66,9 @@
   "finderBluetoothUnsupported": "This phone has no Bluetooth Low Energy, so the finder cannot work.",
   "finderPermissionReason": "To locate your headphones we need to scan for nearby Bluetooth devices. Android also requires the location permission in order to scan; the app never stores or shares your position.",
   "finderPermissionRequired": "Without the Bluetooth permissions we cannot look for devices.",
+  "finderLocationOffTitle": "Turn on location",
+  "finderLocationOffBody": "On this phone, Android only finds Bluetooth devices while location is on. Turn it on and tap search again. The app never stores or shares your position.",
+  "finderLocationOffAction": "Turn on location",
 
   "radarBandFar": "Far",
   "radarBandNear": "Close",

@@ -98,6 +98,24 @@ void main() {
     expect(find.byIcon(Icons.stop), findsOneWidget);
   });
 
+  testWidgets('with location off, search explains instead of scanning', (
+    WidgetTester tester,
+  ) async {
+    final FakeScanService service = FakeScanService();
+    await pumpApp(
+      tester,
+      scanService: service,
+      locationServices: FakeLocationServices()..off = true,
+    );
+
+    await tester.tap(find.byIcon(Icons.bluetooth_searching).last);
+    await tester.pumpAndSettle();
+
+    // Android 11 and older would scan and find nothing: say why instead.
+    expect(service.scanning, isFalse);
+    expect(find.text('Turn on location'), findsWidgets);
+  });
+
   testWidgets('discovered devices are listed strongest first', (
     WidgetTester tester,
   ) async {

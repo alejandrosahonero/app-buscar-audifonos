@@ -1,4 +1,5 @@
 import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/data/location_services.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/scan_filter.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/favorites_controller.dart';
@@ -18,6 +19,11 @@ final Provider<BluetoothScanService> bluetoothScanServiceProvider =
       ref.onDispose(service.dispose);
       return service;
     });
+
+/// The location toggle that Android 11 and older need on for a scan to find
+/// anything. Stateless, so a plain provider.
+final Provider<LocationServices> locationServicesProvider =
+    Provider<LocationServices>((Ref ref) => const LocationServices());
 
 /// Live device list, unfiltered. Kept alive alongside the service so a single
 /// subscription feeds both the list and the radar screen.

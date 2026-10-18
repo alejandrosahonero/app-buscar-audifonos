@@ -14,6 +14,7 @@ import 'package:buscar_audifonos/features/bluetooth_finder/presentation/provider
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_identity_view.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/device_tile.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/favorite_device_tile.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/location_services_prompt.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/proximity_scale.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/widgets/scan_filter_bar.dart';
 import 'package:buscar_audifonos/services/permissions/permission_providers.dart';
@@ -265,6 +266,21 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     if (!mounted) return;
     if (!granted) {
       context.showSnack(context.l10n.finderPermissionRequired);
+      return;
+    }
+
+    if (!await LocationServicesPrompt.ensure(
+      context,
+      service: ref.read(locationServicesProvider),
+    )) {
+      return;
+    }
+
+    // The banner offers the same, but the search button is where the user is
+    // looking: with the radio off, tapping it must not be a dead end.
+    if (ref.read(bluetoothAvailabilityProvider).value ==
+            BluetoothAvailability.off &&
+        !await service.requestEnable()) {
       return;
     }
 

@@ -120,6 +120,10 @@
   "finderBluetoothUnsupported": "Este teléfono no tiene Bluetooth de baja energía, así que el localizador no puede funcionar.",
   "finderPermissionReason": "Para localizar tus audífonos necesitamos buscar dispositivos Bluetooth cercanos. Android exige además el permiso de ubicación para poder escanear; la app no guarda ni comparte tu posición.",
   "finderPermissionRequired": "Sin los permisos de Bluetooth no podemos buscar dispositivos.",
+  "finderLocationOffTitle": "Activa la ubicación",
+  "finderLocationOffBody": "En este teléfono Android solo encuentra dispositivos Bluetooth con la ubicación activada. Actívala y vuelve a pulsar buscar. La app no guarda ni comparte tu posición.",
+  "@finderLocationOffBody": {"description": "Android 11 y anteriores no entregan resultados de Bluetooth con la ubicación del sistema apagada"},
+  "finderLocationOffAction": "Activar ubicación",
 
   "radarBandFar": "Lejos",
   "radarBandNear": "Cerca",

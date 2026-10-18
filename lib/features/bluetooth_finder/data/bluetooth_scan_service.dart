@@ -210,12 +210,17 @@ class BluetoothScanService {
   }
 
   /// Asks Android to turn the radio on (system dialog). No-op elsewhere.
-  Future<void> requestEnable() async {
+  ///
+  /// Returns whether the radio ended up on, so a caller can carry on with the
+  /// scan the user asked for instead of making them tap a second time.
+  Future<bool> requestEnable() async {
     try {
       await FlutterBluePlus.turnOn();
+      return true;
     } on Object catch (error) {
       // The user declining the system dialog throws. Not an error.
       AppLogger.debug('turnOn refused: $error', name: 'bluetooth');
+      return false;
     }
   }
 

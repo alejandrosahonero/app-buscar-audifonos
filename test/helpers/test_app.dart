@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buscar_audifonos/app.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/data/bluetooth_scan_service.dart';
+import 'package:buscar_audifonos/features/bluetooth_finder/data/location_services.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/domain/discovered_device.dart';
 import 'package:buscar_audifonos/features/bluetooth_finder/presentation/providers/scanner_providers.dart';
 import 'package:buscar_audifonos/services/billing/premium_controller.dart';
@@ -79,7 +80,7 @@ class FakeScanService implements BluetoothScanService {
   void focusOn(String? deviceId) => focusedId = deviceId;
 
   @override
-  Future<void> requestEnable() async {}
+  Future<bool> requestEnable() async => true;
 
   @override
   Future<void> dispose() async => _scanning.close();
@@ -112,11 +113,23 @@ class FakePermissionService implements PermissionService {
   Future<bool> openSettings() async => false;
 }
 
+/// Location always on: the native channel does not exist on the test host.
+class FakeLocationServices implements LocationServices {
+  bool off = false;
+
+  @override
+  Future<bool> blocksScan() async => off;
+
+  @override
+  Future<bool> openSettings() async => false;
+}
+
 Future<void> pumpApp(
   WidgetTester tester, {
   required BluetoothScanService scanService,
   Map<String, Object> preferences = const <String, Object>{},
   bool settle = true,
+  LocationServices? locationServices,
 }) async {
   // The first-run welcome is covered by its own test; everything else starts
   // past it, like every launch after the first.
@@ -133,6 +146,9 @@ Future<void> pumpApp(
         premiumControllerProvider.overrideWith(FakePremiumController.new),
         bluetoothScanServiceProvider.overrideWithValue(scanService),
         permissionServiceProvider.overrideWithValue(FakePermissionService()),
+        locationServicesProvider.overrideWithValue(
+          locationServices ?? FakeLocationServices(),
+        ),
       ],
       child: const App(),
     ),
